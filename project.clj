@@ -1,6 +1,6 @@
 (defproject clj-chess "0.1.0"
   :description "A library of utilities for writing chess related applications."
-  :url "http://example.com/FIXME"
+  :url "http://github.com/romstad/clj-chess"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :source-paths ["src/clojure"]
