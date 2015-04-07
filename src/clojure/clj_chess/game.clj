@@ -30,6 +30,11 @@
               "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"))
   ([] (new-game "?" "?" "?" "?" "?" "?" "*")))
 
+(defn board
+  "Returns the current board position of a game."
+  [game]
+  (-> game :current-node :board))
+
 (defn- game-zip
   "Creates a zipper for traversing a game. By default, the zipper
   is initialized to the root node of the game tree. The optional
@@ -101,6 +106,7 @@
   (add-move game board/move-from-uci uci-move
             (or node-id (-> game :current-node :node-id))))
 
+
 (defn add-key-value-pair
   "Adds a key value pair to the map at the given node id of the game. If no
   node id is supplied, the key value pair is added at the current node."
@@ -133,4 +139,4 @@
 (defn side-to-move
   "The side to move at the current game position, :white or :black."
   [game]
-  (-> game :board board/side-to-move))
+  (-> game board board/side-to-move))
