@@ -44,6 +44,23 @@
   (second (first (filter #(= tag-name (first %))
                          (game :tags)))))
 
+(defn remove-tag
+  "Returns a new game equal to the input game, but with the given tag removed
+  (if it exists)."
+  [game tag-name]
+  (assoc game :tags (remove #(= tag-name (first %))
+                            (game :tags))))
+
+(defn set-tag
+  "Returns a new game equal to the input game, but with the given tag set to
+  the given value. If the tag does not exist in the input game, it is added
+  to the end of the tags list."
+  [game name value]
+  (if (tag-value game name)
+    (assoc game :tags (map #(if (= name (first %)) [name value] %)
+                           (game :tags)))
+    (assoc game :tags (concat (game :tags) [[name value]]))))
+
 (defn board
   "Returns the current board position of a game."
   [game]
