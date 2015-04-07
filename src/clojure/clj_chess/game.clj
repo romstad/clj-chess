@@ -14,22 +14,35 @@
   (swap! counter inc))
 
 (defn new-game
-  "Creates a new game object with the given PGN tags and start position."
-  [& {:keys [white black event site date round result start-fen]
+  "Creates a new game object with the given PGN tags and start position. The
+  seven standard tags that make up the \"Seven Tag Roster\" in the PGN standard
+  are supplied by induvidual keyword parameters, as is the start-fen parameter
+  that is used to specify the initial position of the game. If any further PGN
+  tags are desired, they should be supplied in a sequence of two-element
+  vectors of the form [<tag-name> <tag-value>]."
+  [& {:keys [white black event site date round result start-fen other-tags]
       :or {white "?" black "?" event "?" site "?" date "?" round "?"
            result "*" 
            start-fen board/start-fen}}]
   (let [root-node {:board (board/make-board start-fen)
                    :node-id (generate-id)}]
-     {:white white
-      :black black
-      :event event
-      :site site
-      :date date
-      :round round
-      :result result
+     {:tags (concat [["White" white]
+                     ["Black" black]
+                     ["Event" event]
+                     ["Site" site]
+                     ["Date" date]
+                     ["Round" round]
+                     ["Result" result]]
+                    other-tags)
       :root-node root-node
       :current-node root-node}))
+
+(defn tag-value
+  "Returns the value of the given PGN tag in the game, or nil if no such
+  tag exists."
+  [game tag-name]
+  (second (first (filter #(= tag-name (first %))
+                         (game :tags)))))
 
 (defn board
   "Returns the current board position of a game."
@@ -317,18 +330,13 @@
   variations."
   [game & {:keys [include-comments? include-variations?]
            :or {include-comments? true include-variations? true}}]
-  (str (cl-format nil "[Event \"~a\"]\n" (game :event))
-       (cl-format nil "[Site \"~a\"]\n" (game :site))
-       (cl-format nil "[Date \"~a\"]\n" (game :date))
-       (cl-format nil "[Round \"~a\"]\n" (game :round))
-       (cl-format nil "[White \"~a\"]\n" (game :white))
-       (cl-format nil "[Black \"~a\"]\n" (game :black))
-       (cl-format nil "[Result \"~a\"]\n" (game :result))
+  (str (apply str (map #(cl-format nil "[~a ~s]\n" (first %) (second %))
+                       (g :tags)))
        "\n"
        (WordUtils/wrap (move-text game
                                   :include-comments? include-comments?
                                   :include-variations? include-variations?)
                        80)
        " "
-       (game :result)
+       (tag-value game "Result")
        "\n"))
