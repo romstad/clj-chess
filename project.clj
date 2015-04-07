@@ -1,4 +1,4 @@
-(defproject clj-chess "0.1.2-SNAPSHOT"
+(defproject clj-chess "0.2.0-SNAPSHOT"
   :description "A library of utilities for writing chess related applications."
   :url "http://github.com/romstad/clj-chess"
   :license {:name "Eclipse Public License"
@@ -9,4 +9,5 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [instaparse "1.3.6"]
                  [me.raynes/conch "0.8.0"]
-                 [org.apache.commons/commons-math3 "3.4.1"]])
+                 [org.apache.commons/commons-math3 "3.4.1"]
+                 [org.apache.commons/commons-lang3 "3.4"]])

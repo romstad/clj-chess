@@ -7,7 +7,7 @@
   "Creates a new chess board from a FEN string. If no string is supplied, the
   standard initial position is used."
   [& [fen]]
-  (Board/fromFen (or fen start-fen)))
+  (Board/boardFromFen (or fen start-fen)))
 
 (defn terminal?
   "Tests whether the board position is terminal, i.e. checkmate or an
@@ -43,10 +43,13 @@
   (.pieceOn board square))
 
 (defn last-move
-  "The last move played to reach this board position. Equals Move/NONE at
+  "The last move played to reach this board position, or nil if we are at
   the beginning of the game."
   [board]
-  (.getLastMove board))
+  (let [move (.getLastMove board)]
+    (if (= move Move/NONE)
+      nil
+      move)))
 
 (defn checking-pieces
   "Returns a vector of all squares containing checking pieces (0, 1 or 2)."
@@ -70,10 +73,19 @@
   (first (filter #(= uci-move (move-to-uci %))
                  (moves board))))
 
+(defn move-number
+  "Current full move number."
+  [board]
+  (+ 1 (quot (.getGamePly board) 2)))
+ 
 (defn move-to-san
-  "Translates a move to a string in short algebraic notation."
-  [board move]
-  (.moveToSAN board move))
+  "Translates a move to a string in short algebraic notation, optionally
+  including a preceding move number."
+  [board move & {:keys [include-move-number?]}]
+  (str (cond (not include-move-number?) ""
+             (= :white (side-to-move board)) (str (move-number board) ". ")
+             :else (str (move-number board) "... "))
+       (.moveToSAN board move)))
 
 (defn move-from-san
   "Translate a move string in short algebraic notation to a move from the given
@@ -156,11 +168,6 @@
   [board]
   (.toUCI board))
 
-(defn move-number
-  "Current full move number."
-  [board]
-  (+ 1 (quot (.getGamePly board) 2)))
-
 (defn variation-to-san
   "Translates a variation from a sequence of UCI moves to a string in
   short algebraic notation."
@@ -171,17 +178,16 @@
     (if (empty? moves)
       result
       (let [move (move-from-uci b (first moves))
-            san-move (move-to-san b move)
             wtm (= :white (side-to-move b))
-            num (cond (not include-move-numbers) ""
-                      wtm (str (move-number b) ". ")
-                      (empty? result) (str (move-number b) "... ")
-                      :else "")]
+            san-move (move-to-san 
+                       b move 
+                       :include-move-number? (and include-move-numbers
+                                                  (or wtm (empty? result))))]  
         (recur (rest moves)
                (do-move b move)
                (if (empty? result)
-                 (str num san-move)
-                 (str result " " num san-move)))))))
+                 (str san-move)
+                 (str result " " san-move)))))))
 
 
 (defn move-to-map
