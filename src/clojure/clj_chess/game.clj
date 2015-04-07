@@ -4,7 +4,7 @@
   (:require [clojure.zip :as zip]
             [clj-chess.board :as board]))
 
-(defonce counter (atom 0))
+(defonce ^:private counter (atom 0))
 
 (defn- generate-id
   "Generates a unique ID for freshly generated nodes."
@@ -63,9 +63,9 @@
                                              (move-function board move))
                        :node-id (generate-id)})))
 
-(def zip-add-san-move #(zip-add-move %1 board/move-from-san %2))
-(def zip-add-uci-move #(zip-add-move %1 board/move-from-uci %2) )
-(def zip-add-plain-move #(zip-add-move %2 (fn [_ m] m) %2))
+(def ^:private zip-add-san-move #(zip-add-move %1 board/move-from-san %2))
+(def ^:private zip-add-uci-move #(zip-add-move %1 board/move-from-uci %2))
+(def ^:private zip-add-plain-move #(zip-add-move %2 (fn [_ m] m) %2))
 
 (defn- zip-add-key-value-pair
   [zipper key value]
