@@ -13,22 +13,21 @@
 
 (defn new-game
   "Creates a new game object with the given PGN tags and start position."
-  ([white black event site date round result start-fen]
-    (let [root-node {:board (board/make-board start-fen)
-                     :node-id (generate-id)}]
-      {:white white
-       :black black
-       :event event
-       :site site
-       :date date
-       :round round
-       :result result
-       :root-node root-node
-       :current-node root-node}))
-  ([white black event site date round result]
-    (new-game white black event site date round result
-              "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"))
-  ([] (new-game "?" "?" "?" "?" "?" "?" "*")))
+  [& {:keys [white black event site date round result start-fen]
+      :or {white "?" black "?" event "?" site "?" date "?" round "?"
+           result "*" 
+           start-fen board/start-fen}}]
+  (let [root-node {:board (board/make-board start-fen)
+                   :node-id (generate-id)}]
+     {:white white
+      :black black
+      :event event
+      :site site
+      :date date
+      :round round
+      :result result
+      :root-node root-node
+      :current-node root-node}))
 
 (defn board
   "Returns the current board position of a game."

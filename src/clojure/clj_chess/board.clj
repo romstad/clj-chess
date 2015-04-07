@@ -1,11 +1,13 @@
 (ns clj-chess.board
   (:import (chess Board Move PieceColor Piece Square)))
 
+(def start-fen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+
 (defn make-board
   "Creates a new chess board from a FEN string. If no string is supplied, the
   standard initial position is used."
-  ([fen] (Board/boardFromFen fen))
-  ([] (make-board "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPPP/RNBQKBNR w KQkq - 0 1")))
+  [& [fen]]
+  (Board/fromFen (or fen start-fen)))
 
 (defn terminal?
   "Tests whether the board position is terminal, i.e. checkmate or an
