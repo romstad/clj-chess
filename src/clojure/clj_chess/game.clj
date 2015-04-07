@@ -120,7 +120,7 @@
   "Exports the current game state in a format ready to be sent to a UCI
   chess engine, i.e. like 'position fen' followed by a sequence of moves."
   [game]
-  (-> game :current-node :board board/board-to-uci))
+  (-> game board board/board-to-uci))
 
 
 (defn move-tree
