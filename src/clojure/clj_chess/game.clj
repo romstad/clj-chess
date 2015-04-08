@@ -421,7 +421,7 @@
        (WordUtils/wrap (move-text game
                                   :include-comments? include-comments?
                                   :include-variations? include-variations?)
-                       80)
+                       79)
        " "
        (tag-value game "Result")
        "\n"))

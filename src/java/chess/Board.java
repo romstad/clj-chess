@@ -1732,10 +1732,10 @@ public final class Board {
                     } else {
                         s.append(Square.toString(from));
                     }
-                    if (this.pieceOn(to) != Piece.EMPTY) {
-                        s.append('x');
-                    }
                 }
+		if (this.pieceOn(to) != Piece.EMPTY) {
+		    s.append('x');
+		}
                 s.append(Square.toString(to));
             }
         }
