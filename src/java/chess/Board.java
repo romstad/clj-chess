@@ -1788,8 +1788,8 @@ public final class Board {
 
         // Find the moving piece
         if (left < right) {
-            if("NBRQK".contains(s.substring(left, left + 1).toUpperCase())) {
-                pt = "NBRQK".indexOf(s.substring(left, left + 1).toUpperCase()) + 2;
+            if ("NBRQK".contains(s.substring(left, left + 1))) {
+                pt = "NBRQK".indexOf(s.substring(left, left + 1)) + 2;
                 left++;
             } else {
                 pt = PieceType.PAWN;
