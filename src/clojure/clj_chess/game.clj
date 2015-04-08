@@ -3,7 +3,8 @@
   Work in progress, use at your own risk."
   (:require [clojure.zip :as zip]
             [clojure.pprint :refer [cl-format]]
-            [clj-chess.board :as board])
+            [clj-chess.board :as board]
+            [clj-chess.pgn :as pgn])
   (:import org.apache.commons.lang3.text.WordUtils))
 
 (defonce ^:private counter (atom 0))
@@ -424,3 +425,16 @@
        " "
        (tag-value game "Result")
        "\n"))
+
+
+(defn from-pgn
+  "Creates a game from a PGN string. Doesn't yet handle comments or
+  variations."
+  [pgn-string]
+  (let [parsed-pgn (pgn/parse-pgn pgn-string)
+        game (reduce #(apply set-tag %1 %2)
+                     (new-game)
+                     (rest (second parsed-pgn)))]
+    (-> game (add-san-move-sequence
+               (filter string? (-> parsed-pgn (nth 2) rest))))))
+
