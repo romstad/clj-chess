@@ -66,6 +66,22 @@
   [game]
   (-> game :current-node :board))
 
+(defn find-node-matching
+  "Finds the first (as found by a depth-first search) game tree node
+  matching the given predicate. If no such node is found, returns nil."
+  [game predicate & [start-node]]
+  (let [start-node (or start-node (game :root-node))]
+    (if (predicate start-node)
+      start-node
+      (first (filter identity
+                     (map #(find-node-matching game predicate %)
+                          (start-node :children)))))))
+
+(defn find-node
+  "Returns the node with the given node id, or nil if no such node exists."
+  [game node-id]
+  (find-node-matching game #(= node-id (% :node-id))))
+ 
 (defn- game-zip
   "Creates a zipper for traversing a game. By default, the zipper
   is initialized to the root node of the game tree. The optional
@@ -144,8 +160,9 @@
   node id is supplied, the key value pair is added at the current node."
   [game key value & [node-id]]
   (let [z (-> (game-zip game (or node-id (-> game :current-node :node-id)))
-              (zip-add-key-value-pair key value))]
-    (assoc game :root-node (zip/root z))))
+              (zip-add-key-value-pair key value))
+        g (assoc game :root-node (zip/root z))]
+    (assoc g :current-node (find-node g (-> g :current-node :node-id)))))
 
 
 (defn add-comment
@@ -166,17 +183,6 @@
   [game cmt & [node-id]]
   (add-key-value-pair game :pre-comment cmt node-id))
 
-
-(defn find-node-matching
-  "Finds the first (as found by a depth-first search) game tree node
-  matching the given predicate. If no such node is found, returns nil."
-  [game predicate & [start-node]]
-  (let [start-node (or start-node (game :root-node))]
-    (if (predicate start-node)
-      start-node
-      (first (filter identity
-                     (map #(find-node-matching game predicate %)
-                          (start-node :children)))))))
 
 
 (defn goto-node-matching
@@ -300,6 +306,10 @@
               (str 
                 (when children
                   (str 
+                    ;; Pre-comment for first child move:
+                    (when include-comments?
+                      (when-let [c ((first children) :pre-comment)]
+                        (str "{" c "} ")))
                     ;; SAN of first child move (main variation):
                     (let [m (-> (first children) :board board/last-move)
                           wtm (= :white (board/side-to-move board))]
@@ -335,11 +345,7 @@
                                   (rest children))))
                     ;; Game continuation after first child move:
                     (node-to-string (first children)))))))]
-    (str 
-      (when include-comments?
-        (when-let [c (-> game :root-node :pre-comment)]
-          (str "{" c "}")))
-      (node-to-string (game :root-node)))))
+    (node-to-string (game :root-node))))
 
 
 (defn to-pgn
