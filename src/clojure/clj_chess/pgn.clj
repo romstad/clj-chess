@@ -70,7 +70,7 @@
    :symbol str
    :comment-content (comp #(str/replace % \newline \space) str)
    :header (fn [name value]
-             [(keyword (str/lower-case (second name))) (second value)])
+             [(second name) (second value)])
    :nag (fn [& rest]
           [:nag (case (first rest)
                   "!" 1
