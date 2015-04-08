@@ -175,6 +175,15 @@
             (or node-id (-> game :current-node :node-id))))
 
 
+(defn add-map-move
+  "Adds a map move (see documentation for clj-chess.board/board-to-map) to a
+  game at a given node id. The move is added as the last child. If no node id
+  is supplied, the current node of the game is used."
+  [game map-move & [node-id]]
+  (add-move game board/move-from-map map-move
+            (or node-id (-> game :current-node :node-id))))
+
+
 (defn add-move-sequence
   "Like add-move, but adds a sequence of moves rather than a single move. This
   is faster than calling add-move multiple times, because we don't have to
