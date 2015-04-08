@@ -9,6 +9,11 @@
   [& [fen]]
   (Board/boardFromFen (or fen start-fen)))
 
+(defn to-fen
+  "Converts the board to a string in Forsyth-Edwards notation."
+  [board]
+  (.toFEN board))
+
 (defn terminal?
   "Tests whether the board position is terminal, i.e. checkmate or an
   immediate draw."

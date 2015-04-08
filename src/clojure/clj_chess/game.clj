@@ -435,8 +435,7 @@
                                   :include-variations? include-variations?)
                        79)
        " "
-       (tag-value game "Result")
-       "\n"))
+       (tag-value game "Result")))
 
 
 (defn from-pgn
