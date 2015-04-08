@@ -237,6 +237,19 @@
     (assoc game :current-node (-> game :current-node :children first))))
 
 
+(defn to-beginning-of-variation
+  "Returns a game identical to the input game, except that we have stepped
+  back until reaching the beginning of the variation containing the previous
+  current node. In other words, we step back until we reach a branch point
+  where the current variation started, or to the root of the game."
+  [game]
+  (loop [n (game :current-node)
+         g (step-back game)]
+    (if (or (at-beginning? g)
+            (not= n (-> g :current-node :children first)))
+      g
+      (recur (g :current-node) (step-back g)))))
+
 (defn to-beginning
   "Returns a game identical to the input game, except that current-node is
   set to the root node."
