@@ -49,6 +49,17 @@
     (is (= (move-tree g0)
            ["d2d4" ["d7d5" ["c2c4"] "g8f6" ["c2c4" "g1f3"]]]))))
 
+(deftest taking-back-moves
+  (let [g0 (-> (new-game) (add-san-move-sequence ["e4" "e5"]))
+        g1 (-> g0 take-back)
+        g2 (-> g0 step-back)]
+    (is (= (-> g1 board to-fen) (-> g2 board to-fen)))
+    (is (not= (-> g1 move-text) (-> g2 move-text)))
+    (is (= (-> g0 to-end board to-fen)
+           (-> g2 to-end board to-fen)))
+    (is (not= (-> g0 to-end board to-fen)
+              (-> g1 to-end board to-fen)))))
+
 (def pgn-string-0
   "[Event \"F/S Return Match\"]
 [Site \"Belgrade, Serbia JUG\"]
@@ -542,7 +553,8 @@ Qg1+. Topalov resigned and this wonderful game was over.} 1-0")
            [Round \"?\"]
            [White \"Kasparov, Garry\"]
            [Black \"Topalov, Veselin\"]
-           [Result \"1-0\"]\n[ECO \"B07\"]
+           [Result \"1-0\"]
+           [ECO \"B07\"]
            [WhiteElo \"2812\"]
            [BlackElo \"2700\"]
            [Annotator \"Kasparov\"]

@@ -82,7 +82,7 @@
   "Returns the node with the given node id, or nil if no such node exists."
   [game node-id]
   (find-node-matching game #(= node-id (% :node-id))))
- 
+
 (defn- game-zip
   "Creates a zipper for traversing a game. By default, the zipper
   is initialized to the root node of the game tree. The optional
@@ -337,6 +337,15 @@
   a leaf node is reached."
   [game]
   (to-end-of-variation (to-beginning game)))
+
+
+(defn take-back
+  "Takes back the move that led to the current node, and returns a game tree
+  with the corresponding node removed and the current node set to the parent.
+  Does nothing if we're already at the beginning of the game."
+  [game]
+  (when-not (at-beginning? game)
+    (remove-node game)))
 
 
 (defn to-uci
