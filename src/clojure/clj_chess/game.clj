@@ -185,7 +185,7 @@
   returns nil."
   [game predicate]
   (when-let [node (find-node-matching game predicate)]
-    (assoc g13 :current-node node)))
+    (assoc game :current-node node)))
 
 
 (defn goto-node-id
@@ -298,7 +298,7 @@
             (let [board (node :board)
                   children (node :children)]
               (str 
-               (when children
+                (when children
                   (str 
                     ;; SAN of first child move (main variation):
                     (let [m (-> (first children) :board board/last-move)
@@ -348,7 +348,7 @@
   [game & {:keys [include-comments? include-variations?]
            :or {include-comments? true include-variations? true}}]
   (str (apply str (map #(cl-format nil "[~a ~s]\n" (first %) (second %))
-                       (g :tags)))
+                       (game :tags)))
        "\n"
        (WordUtils/wrap (move-text game
                                   :include-comments? include-comments?
