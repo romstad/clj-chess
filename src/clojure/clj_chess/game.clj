@@ -116,6 +116,25 @@
 (def ^:private zip-add-uci-move #(zip-add-move %1 board/move-from-uci %2))
 (def ^:private zip-add-plain-move #(zip-add-move %2 (fn [_ m] m) %2))
 
+(defn- zip-add-move-sequence
+  "Takes a zipper, a move function (a function that, given a board and some
+  other value, translates that value to a chess move), and a sequence of 
+  values representing chess moves, and returns a new zipper for a modified 
+  game tree where the moves have been added at the zipper location."
+  [zipper move-function moves]
+  (reduce (fn [z m] 
+            (-> (zip-add-move z move-function m)
+                (zip/down)
+                (zip/rightmost)))
+          zipper
+          moves))
+
+(def ^:private zip-add-san-move-sequence 
+  #(zip-add-move-sequence %1 board/move-from-san %2))
+
+(def ^:private zip-add-uci-move-sequence
+  #(zip-add-move-sequence %2 board/move-from-uci %2))
+
 (defn- zip-add-key-value-pair
   [zipper key value]
   (zip/edit zipper assoc-in [key] value))
@@ -153,6 +172,35 @@
   [game uci-move & [node-id]]
   (add-move game board/move-from-uci uci-move
             (or node-id (-> game :current-node :node-id))))
+
+
+(defn add-move-sequence
+  "Like add-move, but adds a sequence of moves rather than a single move. This
+  is faster than calling add-move multiple times, because we don't have to
+  unzip and zip the tree for each added move."
+  [game move-function moves node-id]
+  (let [z (-> (game-zip game node-id)
+              (zip-add-move-sequence move-function moves))]
+    (assoc game :root-node (zip/root z)
+                :current-node (zip/node z))))
+
+
+(defn add-san-move-sequence
+  "Like add-san-move, but adds a sequence of moves rather than a single move. 
+  This is faster than calling add-san-move multiple times, because we don't
+  have to unzip and zip the tree for each added move."
+  [game san-moves & [node-id]]
+  (add-move-sequence game board/move-from-san san-moves
+                     (or node-id (-> game :current-node :node-id))))
+
+
+(defn add-uci-move-sequence
+  "Like add-uci-move, but adds a sequence of moves rather than a single move. 
+  This is faster than calling add-uci-move multiple times, because we don't
+  have to unzip and zip the tree for each added move."
+  [game uci-moves & [node-id]]
+  (add-move-sequence game board/move-from-uci uci-moves
+                     (or node-id (-> game :current-node :node-id))))
 
 
 (defn add-key-value-pair
