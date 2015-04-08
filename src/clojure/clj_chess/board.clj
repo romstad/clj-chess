@@ -149,21 +149,25 @@
     1 :wp, 2 :wn, 3 :wb, 4 :wr, 5 :wq, 6 :wk
     9 :bp, 10 :bn, 11 :bb, 12 :br, 13 :bq, 14 :bk))
 
+(defn move-from-map
+  "Translate a move in map notation to a move from the given board. If no
+  maching move is found, returns nil."
+  [board move-map]
+  (first
+    (filter #(and (= (Move/from %) (move-map :from))
+                  (= (Move/to %) (move-map :to))
+                  (or (not (move-map :promotion))
+                      (let [pr (Piece/make (side-to-move board)
+                                           (Move/promotion %))]
+                        (= (piece-to-keyword pr)
+                           (move-map :promotion)))))
+            (moves board))))
 
 (defn do-map-move
   "Execute the move given by the provided move map. For the format of this
   map, see the documentation of board-to-map."
   [board move-map]
-  (when-let [move (first
-                    (filter #(and (= (Move/from %) (move-map :from))
-                                  (= (Move/to %) (move-map :to))
-                                  (or (not (move-map :promotion))
-                                      (let [pr (Piece/make
-                                                 (side-to-move board)
-                                                 (Move/promotion %))]
-                                        (= (piece-to-keyword pr)
-                                           (move-map :promotion)))))
-                            (moves board)))]
+  (when-let [move (move-from-map board move-map)]
     (do-move board move)))
 
 (defn board-to-uci
