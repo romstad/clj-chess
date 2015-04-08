@@ -233,6 +233,18 @@
   (add-key-value-pair game :pre-comment cmt node-id))
 
 
+(defn remove-node
+  "Removes a node (by default, the current node) from the game, and returns
+  a modified game with the current node set to the parent of the deleted
+  node."
+  [game & [node-id]]
+  (let [node-id (or node-id (-> game :current-node :node-id))
+        z (game-zip game node-id)
+        zr (zip/remove z)]
+    (assoc game :root-node (zip/root zr)
+                :current-node (if (= (zip/up z) (zip/prev z))
+                                (zip/node zr)
+                                (zip/node (zip/up zr))))))
 
 (defn goto-node-matching
   "Returns a game equal to the input game, except that :current-node is set to
@@ -366,7 +378,7 @@
             (let [board (node :board)
                   children (node :children)]
               (str 
-                (when children
+                (when-not (empty? children)
                   (str 
                     ;; Pre-comment for first child move:
                     (when include-comments?
