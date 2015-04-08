@@ -17,7 +17,7 @@
 (defn new-game
   "Creates a new game object with the given PGN tags and start position. The
   seven standard tags that make up the \"Seven Tag Roster\" in the PGN standard
-  are supplied by induvidual keyword parameters, as is the start-fen parameter
+  are supplied by individual keyword parameters, as is the start-fen parameter
   that is used to specify the initial position of the game. If any further PGN
   tags are desired, they should be supplied in a sequence of two-element
   vectors of the form [<tag-name> <tag-value>]."
@@ -27,12 +27,12 @@
            start-fen board/start-fen}}]
   (let [root-node {:board (board/make-board start-fen)
                    :node-id (generate-id)}]
-     {:tags (concat [["White" white]
-                     ["Black" black]
-                     ["Event" event]
+     {:tags (concat [["Event" event]
                      ["Site" site]
                      ["Date" date]
                      ["Round" round]
+                     ["White" white]
+                     ["Black" black]
                      ["Result" result]]
                     other-tags)
       :root-node root-node
