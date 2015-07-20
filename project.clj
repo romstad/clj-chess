@@ -5,9 +5,12 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]
+  :resource-paths ["src/javascript"]
   :javac-options ["-target" "1.8" "-source" "1.8"]
-  :dependencies [[org.clojure/clojure "1.6.0"]
-                 [instaparse "1.3.6"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
+                 [org.clojure/clojurescript "0.0-3308"]
+                 [instaparse "1.4.1"]
+                 [com.lucasbradstreet/instaparse-cljs "1.4.1.0"]
                  [me.raynes/conch "0.8.0"]
                  [org.apache.commons/commons-math3 "3.4.1"]
                  [org.apache.commons/commons-lang3 "3.4"]])

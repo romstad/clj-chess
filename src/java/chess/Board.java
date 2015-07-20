@@ -1595,7 +1595,7 @@ public final class Board {
 
 
     /// Generate a list of all legal moves.
-    public List<Integer>legalMoves() {
+    public List<Integer> moves() {
         return state.legalMoves();
     }
 
@@ -1751,7 +1751,7 @@ public final class Board {
     /// Converts a string in short algebraic notation to a move. If no matching move is
     /// found, or if the move is ambiguous, returns Move.NONE.
     public int moveFromSAN(String str) {
-        List<Integer> moves = this.legalMoves();
+        List<Integer> moves = this.moves();
 
         // Castling moves
         if (str.length() >= 5 && str.substring(0, 5).equals("O-O-O")) {

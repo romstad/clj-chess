@@ -1,5 +1,56 @@
 (ns clj-chess.board
-  (:import (chess Board Move PieceColor Piece Square)))
+  #?(:cljs (:require [jschess.chess :as jsc])
+     :clj (:import (chess Board Move PieceColor Piece Square))))
+
+(def color-white #?(:clj PieceColor/WHITE :cljs 0))
+(def color-black #?(:clj PieceColor/BLACK :cljs 1))
+
+
+(defn square-make [file rank]
+  #?(:clj (Square/make file rank)
+     :cljs (jsc/squareMake file rank)))
+
+(defn square-file [square]
+  #?(:clj (Square/file square)
+     :cljs (jsc/squareFile square)))
+
+(defn square-rank [square]
+  #?(:clj (Square/rank square)
+     :cljs (jsc/squareRank square)))
+
+(defn piece-make [color type]
+  #?(:clj (Piece/make color type)
+     :cljs (jsc/pieceMake color type)))
+
+(defn move-from [move]
+  #?(:clj (Move/from move)
+     :cljs (jsc/moveFrom move)))
+
+(defn move-to [move]
+  #?(:clj (Move/to move)
+     :cljs (jsc/moveTo move)))
+
+(defn is-kingside-castle? [move]
+  #?(:clj (Move/isKingsideCastle move)
+     :cljs (jsc/moveIsKingsideCastle move)))
+
+(defn is-queenside-castle? [move]
+  #?(:clj (Move/isQueensideCastle move)
+     :cljs (jsc/moveIsQueensideCastle move)))
+
+(defn move-is-ep? [move]
+  #?(:clj (Move/isEP move)
+     :cljs (jsc/moveIsEP move)))
+
+(defn move-is-promotion? [move]
+  #?(:clj (Move/isPromotion move)
+     :cljs (jsc/moveIsPromotion move)))
+
+(defn move-promotion [move]
+  #?(:clj (Move/promotion move)
+     :cljs (jsc/movePromotion move)))
+
+(def move-none #?(:clj Move/NONE :cljs nil))
 
 (def start-fen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
@@ -7,7 +58,8 @@
   "Creates a new chess board from a FEN string. If no string is supplied, the
   standard initial position is used."
   [& [fen]]
-  (Board/boardFromFen (or fen start-fen)))
+  #?(:clj (Board/boardFromFen (or fen start-fen))
+     :cljs (.fromFEN jsc/Board (or fen start-fen))))
 
 (defn to-fen
   "Converts the board to a string in Forsyth-Edwards notation."
@@ -38,7 +90,7 @@
 (defn side-to-move
   "The current side to move, :white or :black."
   [board]
-  (if (= (.getSideToMove board) PieceColor/WHITE)
+  (if (= (.getSideToMove board) color-white)
     :white
     :black))
 
@@ -51,25 +103,27 @@
   "The last move played to reach this board position, or nil if we are at
   the beginning of the game."
   [board]
-  (let [move (.getLastMove board)]
-    (if (= move Move/NONE)
+  (let [move #?(:clj (.getLastMove board)
+                :cljs (.-lastMove board))]
+    (if (= move move-none)
       nil
       move)))
 
 (defn checking-pieces
   "Returns a vector of all squares containing checking pieces (0, 1 or 2)."
   [board]
-  (.checkingPieces board))
+  (vec (.checkingPieces board)))
 
 (defn moves
   "Returns the legal moves for the current board."
   [board]
-  (vec (.legalMoves board)))
+  (vec (.moves board)))
 
 (defn move-to-uci
   "Translates a move to a string in UCI notation."
   [move]
-  (Move/toUCI move))
+  #?(:clj (Move/toUCI move)
+     :cljs (jsc/moveToUCI move)))
 
 (defn move-from-uci
   [board uci-move]
@@ -81,7 +135,9 @@
 (defn move-number
   "Current full move number."
   [board]
-  (+ 1 (quot (.getGamePly board) 2)))
+  (+ 1 (quot #?(:clj (.getGamePly board)
+                :cljs (.-gamePly board))
+             2)))
  
 (defn move-to-san
   "Translates a move to a string in short algebraic notation, optionally
@@ -97,7 +153,7 @@
   board. If no matching move is found, returns nil."
   [board san-move]
   (let [move (.moveFromSAN board san-move)]
-    (if (= move Move/NONE)
+    (if (= move move-none)
       nil
       move)))
 
@@ -154,11 +210,11 @@
   maching move is found, returns nil."
   [board move-map]
   (first
-    (filter #(and (= (Move/from %) (move-map :from))
-                  (= (Move/to %) (move-map :to))
+    (filter #(and (= (move-from %) (move-map :from))
+                  (= (move-to %) (move-map :to))
                   (or (not (move-map :promotion))
-                      (let [pr (Piece/make (side-to-move board)
-                                           (Move/promotion %))]
+                      (let [pr (piece-make (side-to-move board)
+                                           (move-promotion %))]
                         (= (piece-to-keyword pr)
                            (move-map :promotion)))))
             (moves board))))
@@ -207,26 +263,27 @@
 
   for the move fxg8=R."
   [board move]
-  (let [from (Move/from move)
-        to (Move/to move)
+  (let [from (move-from move)
+        to (move-to move)
         map {:piece (piece-to-keyword (.pieceOn board from)) :from from :to to}
         stm (.getSideToMove board)]
     (cond
-      (Move/isKingsideCastle move) (assoc map :rook-from (+ to 1) :rook-to (- to 1))
-      (Move/isQueensideCastle move) (assoc map :rook-from (- to 2) :rook-to (+ to 1))
-      (Move/isEP move) (assoc map :captured-piece (if (= stm PieceColor/WHITE) :bp :wp)
-                                  :capture-square (Square/make (Square/file to)
-                                                               (Square/rank from)))
-      (and (Move/isPromotion move) (not (.isEmpty board to)))
+      (is-kingside-castle? move) (assoc map :rook-from (+ to 1) :rook-to (- to 1))
+      (is-queenside-castle? move) (assoc map :rook-from (- to 2) :rook-to (+ to 1))
+      (move-is-ep? move) (assoc map :captured-piece (if (= stm color-white) :bp :wp)
+                                  :capture-square (square-make (square-file to)
+                                                               (square-rank from)))
+      (and (move-is-promotion? move) (not (.isEmpty board to)))
       (assoc map :captured-piece (piece-to-keyword (.pieceOn board to))
                  :promote-to (piece-to-keyword
-                               (Piece/make stm (Move/promotion move))))
-      (Move/isPromotion move)
+                               (piece-make stm (move-promotion move))))
+      (move-is-promotion? move)
       (assoc map :promote-to (piece-to-keyword
-                               (Piece/make stm (Move/promotion move))))
+                               (piece-make stm (move-promotion move))))
       (not (.isEmpty board to)) (assoc map
                                   :captured-piece (piece-to-keyword (.pieceOn board to)))
       :else map)))
+
 
 (defn board-to-map
   "Translates a board and its list of legal moves to a map of the following

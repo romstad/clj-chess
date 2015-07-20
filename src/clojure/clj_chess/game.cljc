@@ -2,10 +2,11 @@
   "Tree data structure for representing an annotated game with variations.
   Work in progress, use at your own risk."
   (:require [clojure.zip :as zip]
-            [clojure.pprint :refer [cl-format]]
+            #?(:clj [clojure.pprint :refer [cl-format]]
+               :cljs [cljs.pprint :refer [cl-format]])
             [clj-chess.board :as board]
             [clj-chess.pgn :as pgn])
-  (:import org.apache.commons.lang3.text.WordUtils))
+  #?(:clj (:import org.apache.commons.lang3.text.WordUtils)))
 
 (defonce ^:private counter (atom 0))
 
@@ -440,6 +441,10 @@
     (node-to-string (game :root-node))))
 
 
+(defn- wrap [text column]
+  #?(:clj (WordUtils/wrap text column)
+     :cljs text))
+
 (defn to-pgn
   "Creates a PGN string from a game, optionally including comments and
   variations."
@@ -448,10 +453,10 @@
   (str (apply str (map #(cl-format nil "[~a ~s]\n" (first %) (second %))
                        (game :tags)))
        "\n"
-       (WordUtils/wrap (move-text game
-                                  :include-comments? include-comments?
-                                  :include-variations? include-variations?)
-                       79)
+       (wrap (move-text game
+                        :include-comments? include-comments?
+                        :include-variations? include-variations?)
+             79)
        " "
        (tag-value game "Result")))
 

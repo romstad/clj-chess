@@ -3,7 +3,8 @@
   idea, since it's painfully slow. This entire namespace needs to be rewritten
   before it is usable."
   (:require [clojure.string :as str]
-            [instaparse.core :as ip]))
+            [instaparse.core :as ip]
+            #?(:cljs [cljs.reader :refer [read-string]])))
 
 (def pgn-parser
   (ip/parser
@@ -81,9 +82,26 @@
                   "?!" 6
                   "$" (read-string (second rest)))])})
 
+(defn- vectorize-parsed-pgn
+  "Workaround for bug (?) in instaparse-cljs, where some parse tree entries
+  turn out to be of type instaparse.auto-flatten-seq/FlattenOnDemandVector
+  rather than vectors."
+  [parsed-pgn]
+  (cond
+    (not (coll? parsed-pgn))
+    parsed-pgn
+
+    (= (type parsed-pgn) instaparse.auto-flatten-seq/FlattenOnDemandVector)
+    (vec parsed-pgn)
+
+    :else (vec (cons (first parsed-pgn)
+                     (map vectorize-parsed-pgn (rest parsed-pgn))))))
 
 (defn parse-pgn [pgn & [start]]
-  (ip/transform pgn-transform (pgn-parser pgn :start (or start :game))))
+  (let [parsed-pgn (pgn-parser pgn :start (or start :game))]
+    (ip/transform pgn-transform
+                  #?(:clj parsed-pgn
+                     :cljs (vectorize-parsed-pgn parsed-pgn)))))
 
 
 
