@@ -1537,6 +1537,10 @@ Board.prototype.moveToSAN = function (move) {
 }
 
 
+Board.prototype.lastMoveToSAN = function () {
+   return this.parent ? this.parent.moveToSAN(this.lastMove) : null;
+}
+
 Board.prototype.moveFromSAN = function (str) {
    var moves = this.moves()
 

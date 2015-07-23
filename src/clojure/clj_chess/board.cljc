@@ -157,6 +157,12 @@
       nil
       move)))
 
+(defn last-move-to-san
+  "Translate the last move played to reach this board position to short
+  algebraic notation."
+  [board]
+  (.lastMoveToSAN board))
+
 (defn do-move
   "Do a move (encoded as an integer) from the current board, and returns the
   new board. The move is assumed to be legal."

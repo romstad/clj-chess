@@ -1385,12 +1385,19 @@ public final class Board {
     }
 
     /// Parent board (can be nil):
-    private Board getParent() {
+    public Board getParent() {
         return state.getParent();
     }
 
     /// Last move played to reach this position:
     public int getLastMove() { return state.getLastMove(); }
+
+    /// Short algebraic notation for the last move, or null if there is no
+    /// last move:
+    public String lastMoveToSAN() {
+        Board b = getParent();
+        return b == null ? null : getParent().moveToSAN(getLastMove());
+    }
 
     /// Grandparent board (can be nil). Used when looking back through the
     /// ancestors to check for repetition draws.
