@@ -141,6 +141,12 @@
   [zipper key value]
   (zip/edit zipper assoc-in [key] value))
 
+(defn- zip-remove-children
+  "Takes a game tree zipper and returns a zipper for a modified game tree
+  where all the child nodes at the current location are removed."
+  [zipper]
+  (zip/edit zipper #(dissoc % :children)))
+
 
 (defn add-move
   "Takes a game, a move function (a function that, given a board and
@@ -255,6 +261,17 @@
                 :current-node (if (= (zip/up z) (zip/prev z))
                                 (zip/node zr)
                                 (zip/node (zip/up zr))))))
+
+
+(defn remove-children
+  "Removes all child nodes of a node (by default, the current node), and
+  returns a modified game with the current node set to the node whose
+  children we just removed."
+  [game & {:keys [node-id] :or {node-id (-> game :current-node :node-id)}}]
+  (assoc game
+    :root-node (-> (game-zip game node-id) zip-remove-children zip/root)
+    :current-node node-id))
+
 
 (defn goto-node-matching
   "Returns a game equal to the input game, except that :current-node is set to
