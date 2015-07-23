@@ -1508,10 +1508,10 @@ Board.prototype.moveToSAN = function (move) {
 	 var file = squareFile(from), rank = squareRank(from)
 	 var sameFileCount = 0, sameRankCount = 0
 	 for (var i = 0; i < moves.length; i++) {
-	    if (squareFile(moveFrom(ms[i])) == file) {
+	    if (squareFile(moveFrom(moves[i])) == file) {
 	       sameFileCount++;
 	    }
-	    if (squareRank(moveFrom(ms[i])) == rank) {
+	    if (squareRank(moveFrom(moves[i])) == rank) {
 	       sameRankCount++;
 	    }
 	 }
