@@ -60,6 +60,26 @@
     (is (not= (-> g0 to-end board to-fen)
               (-> g1 to-end board to-fen)))))
 
+(deftest removing-all-children
+  (let [g0 (-> (new-game)
+               (add-san-move "c4") (add-san-move "e5")
+               (step-back) (add-san-move "c5")
+               (step-back) (remove-children) (add-san-move "Nf6"))]
+    (is (= (move-tree g0)
+           ["c2c4" ["g8f6"]]))))
+
+(deftest promoting-nodes
+  (let [g0 (-> (new-game)
+               (add-san-move-sequence ["e4" "c5"])
+               (step-back) (add-san-move "e5")
+               (promote-node)
+               (step-back) (add-san-move "e6"))
+        g1 (-> g0 (promote-node-to-main-line))]
+    (is (= (move-tree g0)
+           ["e2e4" ["e7e5" "c7c5" "e7e6"]]))
+    (is (= (move-tree g1)
+           ["e2e4" ["e7e6" "e7e5" "c7c5"]]))))
+
 (def pgn-string-0
   "[Event \"F/S Return Match\"]
 [Site \"Belgrade, Serbia JUG\"]

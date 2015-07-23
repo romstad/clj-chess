@@ -157,6 +157,29 @@
   [zipper]
   (zip/edit zipper #(dissoc % :children)))
 
+(defn zip-promote-node
+  "Takes a game tree zipper and returns a zipper for a modified game tree
+  where the current node is promoted one rank among its sibling. If the
+  current node is already the oldest child, returns the original zipper."
+  [zipper]
+  (if-not (zip/left zipper)
+    zipper
+    (-> zipper zip/remove
+        (zip/insert-left (zip/node zipper))
+        zip/left)))
+
+(defn zip-promote-node-to-front
+  "Takes a game tree zipper and returns a zipper for a modified game tree
+  where the current node is promoted to the oldest among its siblings (i.e.
+  made the main line). If the current node is already the oldest child,
+  returns the original zipper."
+  [zipper]
+  (if-not (zip/left zipper)
+    zipper
+    (-> zipper zip/remove zip/leftmost
+        (zip/insert-left (zip/node zipper))
+        zip/left)))
+
 
 (defn add-move
   "Takes a game, a move function (a function that, given a board and
@@ -300,6 +323,29 @@
     (assoc game
       :root-node (zip/root z)
       :current-node (zip/node z))))
+
+
+(defn promote-node
+  "Returns a modified game where the node with the given node id (if no node
+  id is supplied, the current node is used) is moved one place to the left
+  among its siblings. If the node is already the leftmost (oldest) child of
+  its parent node, the game is returned unchanged."
+  [game & {:keys [node-id] :or {node-id (current-node-id game)}}]
+  (let [z (-> (game-zip game node-id) zip-promote-node)]
+    (assoc game :root-node (zip/root z)
+                :current-node (zip/node z))))
+
+
+(defn promote-node-to-main-line
+  "Returns a modified game where the node with the given node id (if no node
+  id is supplied, the current node is used) is made the main line among its
+  siblings, i.e. moved to the front of the list of child nodes. If the node
+  is already the leftmost (oldest) child of its parent node, the game is
+  returned unchanged."
+  [game & {:keys [node-id] :or {node-id (current-node-id game)}}]
+  (let [z (-> (game-zip game node-id) zip-promote-node-to-front)]
+    (assoc game :root-node (zip/root z)
+                :current-node (zip/node z))))
 
 
 (defn goto-node-matching
