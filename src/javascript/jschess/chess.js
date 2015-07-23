@@ -1529,9 +1529,9 @@ Board.prototype.moveToSAN = function (move) {
       result += squareToString(to)
    }
    if (isMate) {
-      result.append("#")
+      result += "#"
    } else if (isCheck) {
-      result.append("+")
+      result += "+"
    }
    return result
 }
