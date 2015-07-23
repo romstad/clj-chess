@@ -296,9 +296,10 @@
   returns a modified game with the current node set to the node whose
   children we just removed."
   [game & {:keys [node-id] :or {node-id (current-node-id game)}}]
-  (assoc game
-    :root-node (-> (game-zip game node-id) zip-remove-children zip/root)
-    :current-node node-id))
+  (let [z (-> (game-zip game node-id) zip-remove-children)]
+    (assoc game
+      :root-node (zip/root z)
+      :current-node (zip/node z))))
 
 
 (defn goto-node-matching
