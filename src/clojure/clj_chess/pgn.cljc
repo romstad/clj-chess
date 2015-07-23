@@ -82,20 +82,21 @@
                   "?!" 6
                   "$" (read-string (second rest)))])})
 
-(defn- vectorize-parsed-pgn
-  "Workaround for bug (?) in instaparse-cljs, where some parse tree entries
-  turn out to be of type instaparse.auto-flatten-seq/FlattenOnDemandVector
-  rather than vectors."
-  [parsed-pgn]
-  (cond
-    (not (coll? parsed-pgn))
-    parsed-pgn
+#?(:cljs
+   (defn- vectorize-parsed-pgn
+     "Workaround for bug (?) in instaparse-cljs, where some parse tree entries
+     turn out to be of type instaparse.auto-flatten-seq/FlattenOnDemandVector
+     rather than vectors."
+     [parsed-pgn]
+     (cond
+       (not (coll? parsed-pgn))
+       parsed-pgn
 
-    (= (type parsed-pgn) instaparse.auto-flatten-seq/FlattenOnDemandVector)
-    (vec parsed-pgn)
+       (= (type parsed-pgn) instaparse.auto-flatten-seq/FlattenOnDemandVector)
+       (vec parsed-pgn)
 
-    :else (vec (cons (first parsed-pgn)
-                     (map vectorize-parsed-pgn (rest parsed-pgn))))))
+       :else (vec (cons (first parsed-pgn)
+                        (map vectorize-parsed-pgn (rest parsed-pgn)))))))
 
 (defn parse-pgn [pgn & [start]]
   (let [parsed-pgn (pgn-parser pgn :start (or start :game))]
