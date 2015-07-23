@@ -104,38 +104,43 @@
 (defn- zip-add-move
   "Takes a zipper, a move function (a function that, given a board
   and some other value, translates that value to a chess move),
-  and a value representing a move, and returns a new zipper for
-  a modified game tree where the move has been added at the zipper
+  a value representing a move, and a boolean that says whether any previous
+  moves at the current location should be removed, and returns a new zipper
+  for a modified game tree where the move has been added at the zipper
   location."
-  [zipper move-function move]
+  [zipper move-function move remove-existing-moves?]
   (let [board (-> zipper zip/node :board)]
-    (zip/append-child zipper
+    (zip/append-child (if remove-existing-moves?
+                        (zip-remove-children zipper)
+                        zipper)
                       {:board (board/do-move board
                                              (move-function board move))
                        :node-id (generate-id)})))
 
-(def ^:private zip-add-san-move #(zip-add-move %1 board/move-from-san %2))
-(def ^:private zip-add-uci-move #(zip-add-move %1 board/move-from-uci %2))
-(def ^:private zip-add-plain-move #(zip-add-move %2 (fn [_ m] m) %2))
+(def ^:private zip-add-san-move #(zip-add-move %1 board/move-from-san %2 false))
+(def ^:private zip-add-uci-move #(zip-add-move %1 board/move-from-uci %2 false))
+(def ^:private zip-add-plain-move #(zip-add-move %2 (fn [_ m] m) %2 false))
 
 (defn- zip-add-move-sequence
   "Takes a zipper, a move function (a function that, given a board and some
-  other value, translates that value to a chess move), and a sequence of 
-  values representing chess moves, and returns a new zipper for a modified 
-  game tree where the moves have been added at the zipper location."
-  [zipper move-function moves]
+  other value, translates that value to a chess move), a sequence of
+  values representing chess moves, and a boolean that says whether any
+  previous moves at the current node should be removed, and returns a new
+  zipper for a modified game tree where the moves have been added at the
+  zipper location."
+  [zipper move-function moves remove-existing-moves?]
   (reduce (fn [z m] 
-            (-> (zip-add-move z move-function m)
+            (-> (zip-add-move z move-function m remove-existing-moves?)
                 (zip/down)
                 (zip/rightmost)))
           zipper
           moves))
 
 (def ^:private zip-add-san-move-sequence 
-  #(zip-add-move-sequence %1 board/move-from-san %2))
+  #(zip-add-move-sequence %1 board/move-from-san %2 false))
 
 (def ^:private zip-add-uci-move-sequence
-  #(zip-add-move-sequence %2 board/move-from-uci %2))
+  #(zip-add-move-sequence %2 board/move-from-uci %2 false))
 
 (defn- zip-add-key-value-pair
   [zipper key value]
@@ -151,13 +156,13 @@
 (defn add-move
   "Takes a game, a move function (a function that, given a board and
   some other value, translates that value to a chess move), a
-  a value representing a move, and an optional node id as input, and
-  returns an updated game where the move has been added as the last
-  child at the given node. If no node id is supplied, the current node
-  of the game is used."
-  [game move-function move node-id]
+  a value representing a move, a node id, and a boolean that says whether the
+  existing moves at the current nodes should be removed, and returns an
+  updated game where the move has been added as the last child at the given
+  node. If no node id is supplied, the current node of the game is used."
+  [game move-function move node-id remove-existing-moves?]
   (let [z (-> (game-zip game node-id)
-              (zip-add-move move-function move)
+              (zip-add-move move-function move remove-existing-moves?)
               zip/down
               zip/rightmost)]
     (assoc game :root-node (zip/root z)
@@ -167,37 +172,45 @@
 (defn add-san-move
   "Adds a move in short algebraic notation to a game at a given node
   id. The move is added as the last child. If no node id is supplied,
-  the current node of the game is used."
-  [game san-move & {:keys [node-id]}]
+  the current node of the game is used. If remove-existing-moves? is true,
+  any previously existing moves at the point of insertion are removed."
+  [game san-move & {:keys [node-id remove-existing-moves?]}]
   (add-move game board/move-from-san san-move
-            (or node-id (-> game :current-node :node-id))))
+            (or node-id (-> game :current-node :node-id))
+            remove-existing-moves?))
 
 
 (defn add-uci-move
   "Adds a move in UCI notation to a game at a given node id. The move is
   added as the last child. If no node id is supplied, the current node of the
-  game is used."
-  [game uci-move & {:keys [node-id]}]
+  game is used. If remove-existing-moves? is true, any previously existing 
+  moves at the point of insertion are removed."
+  [game uci-move & {:keys [node-id remove-existing-moves?]}]
   (add-move game board/move-from-uci uci-move
-            (or node-id (-> game :current-node :node-id))))
+            (or node-id (-> game :current-node :node-id))
+            remove-existing-moves?))
 
 
 (defn add-map-move
   "Adds a map move (see documentation for clj-chess.board/board-to-map) to a
   game at a given node id. The move is added as the last child. If no node id
-  is supplied, the current node of the game is used."
-  [game map-move & {:keys [node-id]}]
+  is supplied, the current node of the game is used. If remove-existing-moves?
+  is true, any previously existing moves at the point of insertion are removed."
+  [game map-move & {:keys [node-id remove-existing-moves?]}]
   (add-move game board/move-from-map map-move
-            (or node-id (-> game :current-node :node-id))))
+            (or node-id (-> game :current-node :node-id))
+            remove-existing-moves?))
 
 
 (defn add-move-sequence
   "Like add-move, but adds a sequence of moves rather than a single move. This
   is faster than calling add-move multiple times, because we don't have to
-  unzip and zip the tree for each added move."
-  [game move-function moves node-id]
+  unzip and zip the tree for each added move. If remove-existing-moves? is 
+  true, any previously existing moves at the point of insertion are removed."
+  [game move-function moves node-id remove-existing-moves?]
   (let [z (-> (game-zip game node-id)
-              (zip-add-move-sequence move-function moves))]
+              (zip-add-move-sequence move-function moves
+                                     remove-existing-moves?))]
     (assoc game :root-node (zip/root z)
                 :current-node (zip/node z))))
 
@@ -205,19 +218,25 @@
 (defn add-san-move-sequence
   "Like add-san-move, but adds a sequence of moves rather than a single move. 
   This is faster than calling add-san-move multiple times, because we don't
-  have to unzip and zip the tree for each added move."
-  [game san-moves & {:keys [node-id]}]
+  have to unzip and zip the tree for each added move. If 
+  remove-existing-moves? is true, any previously existing moves at the point
+  of insertion are removed."
+  [game san-moves & {:keys [node-id remove-existing-moves?]}]
   (add-move-sequence game board/move-from-san san-moves
-                     (or node-id (-> game :current-node :node-id))))
+                     (or node-id (-> game :current-node :node-id))
+                     remove-existing-moves?))
 
 
 (defn add-uci-move-sequence
   "Like add-uci-move, but adds a sequence of moves rather than a single move. 
   This is faster than calling add-uci-move multiple times, because we don't
-  have to unzip and zip the tree for each added move."
-  [game uci-moves & {:keys [node-id]}]
+  have to unzip and zip the tree for each added move. If
+  remove-existing-moves? is true, any previously existing moves at the point
+  of insertion are removed."
+  [game uci-moves & {:keys [node-id remove-existing-moves?]}]
   (add-move-sequence game board/move-from-uci uci-moves
-                     (or node-id (-> game :current-node :node-id))))
+                     (or node-id (-> game :current-node :node-id))
+                     remove-existing-moves?))
 
 
 (defn add-key-value-pair
