@@ -1,7 +1,8 @@
 (ns clj-chess.game
   "Tree data structure for representing an annotated game with variations.
   Work in progress, use at your own risk."
-  (:require [clojure.zip :as zip]
+  (:require [clojure.string :as str]
+            [clojure.zip :as zip]
             #?(:clj [clojure.pprint :refer [cl-format]]
                :cljs [cljs.pprint :refer [cl-format]])
             [clj-chess.board :as board]
@@ -453,6 +454,18 @@
     (remove-node game)))
 
 
+(defn main-line
+  "Returns a vector of all moves along the main line of the game, beginning
+  with the root and selecting the oldest child until a leaf is reached."
+  [game]
+  (loop [node (:root-node game)
+         result []]
+    (let [child (first (:children node))]
+      (if-not child
+        (conj result node)
+        (recur child (conj result node))))))
+
+
 (defn to-uci
   "Exports the current game state in a format ready to be sent to a UCI
   chess engine, i.e. like 'position fen' followed by a sequence of moves."
@@ -566,4 +579,5 @@
                      (rest (second parsed-pgn)))]
     (-> game (add-san-move-sequence
                (filter string? (-> parsed-pgn (nth 2) rest))))))
+
 
