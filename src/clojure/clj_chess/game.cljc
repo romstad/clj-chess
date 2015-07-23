@@ -68,6 +68,11 @@
   [game]
   (-> game :current-node :board))
 
+(defn current-node-id
+  "Returns the node id of the current node."
+  [game]
+  (-> game :current-node :node-id))
+
 (defn find-node-matching
   "Finds the first (as found by a depth-first search) game tree node
   matching the given predicate. If no such node is found, returns nil."
@@ -174,9 +179,10 @@
   id. The move is added as the last child. If no node id is supplied,
   the current node of the game is used. If remove-existing-moves? is true,
   any previously existing moves at the point of insertion are removed."
-  [game san-move & {:keys [node-id remove-existing-moves?]}]
+  [game san-move & {:keys [node-id remove-existing-moves?]
+                    :or {node-id (current-node-id game)}}]
   (add-move game board/move-from-san san-move
-            (or node-id (-> game :current-node :node-id))
+            node-id
             remove-existing-moves?))
 
 
@@ -185,9 +191,10 @@
   added as the last child. If no node id is supplied, the current node of the
   game is used. If remove-existing-moves? is true, any previously existing 
   moves at the point of insertion are removed."
-  [game uci-move & {:keys [node-id remove-existing-moves?]}]
+  [game uci-move & {:keys [node-id remove-existing-moves?]
+                    :or {node-id (current-node-id game)}}]
   (add-move game board/move-from-uci uci-move
-            (or node-id (-> game :current-node :node-id))
+            node-id
             remove-existing-moves?))
 
 
@@ -196,9 +203,10 @@
   game at a given node id. The move is added as the last child. If no node id
   is supplied, the current node of the game is used. If remove-existing-moves?
   is true, any previously existing moves at the point of insertion are removed."
-  [game map-move & {:keys [node-id remove-existing-moves?]}]
+  [game map-move & {:keys [node-id remove-existing-moves?]
+                    :or {node-id (current-node-id game)}}]
   (add-move game board/move-from-map map-move
-            (or node-id (-> game :current-node :node-id))
+            node-id
             remove-existing-moves?))
 
 
@@ -221,9 +229,10 @@
   have to unzip and zip the tree for each added move. If 
   remove-existing-moves? is true, any previously existing moves at the point
   of insertion are removed."
-  [game san-moves & {:keys [node-id remove-existing-moves?]}]
+  [game san-moves & {:keys [node-id remove-existing-moves?]
+                     :or {node-id (current-node-id game)}}]
   (add-move-sequence game board/move-from-san san-moves
-                     (or node-id (-> game :current-node :node-id))
+                     node-id
                      remove-existing-moves?))
 
 
@@ -233,20 +242,21 @@
   have to unzip and zip the tree for each added move. If
   remove-existing-moves? is true, any previously existing moves at the point
   of insertion are removed."
-  [game uci-moves & {:keys [node-id remove-existing-moves?]}]
+  [game uci-moves & {:keys [node-id remove-existing-moves?]
+                     :or {node-id (current-node-id game)}}]
   (add-move-sequence game board/move-from-uci uci-moves
-                     (or node-id (-> game :current-node :node-id))
+                     node-id
                      remove-existing-moves?))
 
 
 (defn add-key-value-pair
   "Adds a key value pair to the map at the given node id of the game. If no
   node id is supplied, the key value pair is added at the current node."
-  [game key value & {:keys [node-id]}]
-  (let [z (-> (game-zip game (or node-id (-> game :current-node :node-id)))
+  [game key value & {:keys [node-id] :or {node-id (current-node-id game)}}]
+  (let [z (-> (game-zip game node-id)
               (zip-add-key-value-pair key value))
         g (assoc game :root-node (zip/root z))]
-    (assoc g :current-node (find-node g (-> g :current-node :node-id)))))
+    (assoc g :current-node (find-node g (current-node-id game)))))
 
 
 (defn add-comment
@@ -272,9 +282,8 @@
   "Removes a node (by default, the current node) from the game, and returns
   a modified game with the current node set to the parent of the deleted
   node."
-  [game & {:keys [node-id]}]
-  (let [node-id (or node-id (-> game :current-node :node-id))
-        z (game-zip game node-id)
+  [game & {:keys [node-id] :or {node-id (current-node-id game)}}]
+  (let [z (game-zip game node-id)
         zr (zip/remove z)]
     (assoc game :root-node (zip/root zr)
                 :current-node (if (= (zip/up z) (zip/prev z))
@@ -286,7 +295,7 @@
   "Removes all child nodes of a node (by default, the current node), and
   returns a modified game with the current node set to the node whose
   children we just removed."
-  [game & {:keys [node-id] :or {node-id (-> game :current-node :node-id)}}]
+  [game & {:keys [node-id] :or {node-id (current-node-id game)}}]
   (assoc game
     :root-node (-> (game-zip game node-id) zip-remove-children zip/root)
     :current-node node-id))
