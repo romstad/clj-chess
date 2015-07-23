@@ -161,7 +161,8 @@
   "Translate the last move played to reach this board position to short
   algebraic notation."
   [board]
-  (.lastMoveToSAN board))
+  #?(:clj (.lastMoveToSAN board)
+     :cljs (move-to-san (.-parent board) (last-move board))))
 
 (defn do-move
   "Do a move (encoded as an integer) from the current board, and returns the
