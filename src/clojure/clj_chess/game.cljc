@@ -162,7 +162,7 @@
   "Adds a move in short algebraic notation to a game at a given node
   id. The move is added as the last child. If no node id is supplied,
   the current node of the game is used."
-  [game san-move & [node-id]]
+  [game san-move & {:keys [node-id]}]
   (add-move game board/move-from-san san-move
             (or node-id (-> game :current-node :node-id))))
 
@@ -171,7 +171,7 @@
   "Adds a move in UCI notation to a game at a given node id. The move is
   added as the last child. If no node id is supplied, the current node of the
   game is used."
-  [game uci-move & [node-id]]
+  [game uci-move & {:keys [node-id]}]
   (add-move game board/move-from-uci uci-move
             (or node-id (-> game :current-node :node-id))))
 
@@ -180,7 +180,7 @@
   "Adds a map move (see documentation for clj-chess.board/board-to-map) to a
   game at a given node id. The move is added as the last child. If no node id
   is supplied, the current node of the game is used."
-  [game map-move & [node-id]]
+  [game map-move & {:keys [node-id]}]
   (add-move game board/move-from-map map-move
             (or node-id (-> game :current-node :node-id))))
 
@@ -200,7 +200,7 @@
   "Like add-san-move, but adds a sequence of moves rather than a single move. 
   This is faster than calling add-san-move multiple times, because we don't
   have to unzip and zip the tree for each added move."
-  [game san-moves & [node-id]]
+  [game san-moves & {:keys [node-id]}]
   (add-move-sequence game board/move-from-san san-moves
                      (or node-id (-> game :current-node :node-id))))
 
@@ -209,7 +209,7 @@
   "Like add-uci-move, but adds a sequence of moves rather than a single move. 
   This is faster than calling add-uci-move multiple times, because we don't
   have to unzip and zip the tree for each added move."
-  [game uci-moves & [node-id]]
+  [game uci-moves & {:keys [node-id]}]
   (add-move-sequence game board/move-from-uci uci-moves
                      (or node-id (-> game :current-node :node-id))))
 
@@ -217,7 +217,7 @@
 (defn add-key-value-pair
   "Adds a key value pair to the map at the given node id of the game. If no
   node id is supplied, the key value pair is added at the current node."
-  [game key value & [node-id]]
+  [game key value & {:keys [node-id]}]
   (let [z (-> (game-zip game (or node-id (-> game :current-node :node-id)))
               (zip-add-key-value-pair key value))
         g (assoc game :root-node (zip/root z))]
@@ -229,7 +229,7 @@
   Uses current node if no node id is supplied. Adding a comment at the root
   of the game has no effect; if you want to add a comment before the first
   move of the game, use add-pre-comment instead."
-  [game cmt & [node-id]]
+  [game cmt & {:keys [node-id]}]
   (add-key-value-pair game :comment cmt node-id))
 
 
@@ -239,7 +239,7 @@
   displayed *before* the move rather than after. It is probably only useful
   for the first move of the game or the first move of a recursive annotation
   variation."
-  [game cmt & [node-id]]
+  [game cmt & {:keys [node-id]}]
   (add-key-value-pair game :pre-comment cmt node-id))
 
 
@@ -247,7 +247,7 @@
   "Removes a node (by default, the current node) from the game, and returns
   a modified game with the current node set to the parent of the deleted
   node."
-  [game & [node-id]]
+  [game & {:keys [node-id]}]
   (let [node-id (or node-id (-> game :current-node :node-id))
         z (game-zip game node-id)
         zr (zip/remove z)]
