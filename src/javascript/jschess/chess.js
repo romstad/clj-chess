@@ -300,8 +300,8 @@ var moveFromUCI = function (moveString, board) {
    if (moveString.length >= 5) {
       var promotion = pieceFromString(moveString.charAt(4))
       if (promotion != -1) {
-	 promotion = pieceMake(board.sideToMove, pieceType(promotion))
-	 return moveMakePromotion(from, to, promotion)
+         promotion = pieceMake(board.sideToMove, pieceType(promotion))
+         return moveMakePromotion(from, to, promotion)
       }
    }
 
@@ -347,8 +347,8 @@ var Board = chess.Board;
 Board.fromFEN = function (fen) {
 
    var isDigit = function (c) {
-     var r = /^\d$/;
-     return r.test(c)
+      var r = /^\d$/;
+      return r.test(c)
    }
 
    var b = new Board()
@@ -361,18 +361,18 @@ Board.fromFEN = function (fen) {
    var rank = RANK_MAX, file = FILE_MIN
    for (var i = 0; i < s.length; i++) {
       if (isDigit(s[i])) { // Skip the given number of files
-	 file += s.charCodeAt(i) - "1".charCodeAt(0) + 1
+         file += s.charCodeAt(i) - "1".charCodeAt(0) + 1
       } else if (s[i] === "/") { // Move to the next rank
-	 file = FILE_MIN;
-	 rank--;
+         file = FILE_MIN;
+         rank--;
       } else { // Must be a piece, unless the FEN string is broken
-	 var piece = pieceFromString(s[i])
-	 var square = squareMake(file, rank)
-	 b.board[square] = piece
-	 if (pieceType(piece) === KING) {
-	    b.kingSquares[pieceColor(piece)] = square
-	 }
-	 file++
+         var piece = pieceFromString(s[i])
+         var square = squareMake(file, rank)
+         b.board[square] = piece
+         if (pieceType(piece) === KING) {
+            b.kingSquares[pieceColor(piece)] = square
+         }
+         file++
       }
    }
 
@@ -380,7 +380,7 @@ Board.fromFEN = function (fen) {
    if (components.length > 1) {
       s = components[1]
       if (s[0] === "b") {
-	 b.sideToMove = COLOR_BLACK
+         b.sideToMove = COLOR_BLACK
       }
    }
 
@@ -388,10 +388,10 @@ Board.fromFEN = function (fen) {
    if (components.length > 2) {
       s = components[2]
       for (var i = 0; i < s.length; i++) {
-	 var index = "KQkq".indexOf(s[i])
-	 if (index != -1) {
-	    b.castleRights[index] = true
-	 }
+         var index = "KQkq".indexOf(s[i])
+         if (index != -1) {
+            b.castleRights[index] = true
+         }
       }
    }
 
@@ -434,19 +434,19 @@ Board.prototype.toFEN = function () {
    for (var rank = RANK_MAX; rank >= RANK_MIN; rank--) {
       var emptySquareCount = 0
       for (var file = FILE_MIN; file <= FILE_MAX; file++) {
-	 var piece = this.board[squareMake(file, rank)]
-	 if (piece === EMPTY) {
-	    emptySquareCount++;
-	 } else { 
-	    if (emptySquareCount > 0) {
-	       buffer += emptySquareCount
-	    }
-	    buffer += pieceToString(piece)
-	    emptySquareCount = 0
-	 }
+         var piece = this.board[squareMake(file, rank)]
+         if (piece === EMPTY) {
+            emptySquareCount++
+         } else { 
+            if (emptySquareCount > 0) {
+               buffer += emptySquareCount
+            }
+            buffer += pieceToString(piece)
+            emptySquareCount = 0
+         }
       }
       if (emptySquareCount > 0) {
-	 buffer += emptySquareCount
+         buffer += emptySquareCount
       }
       buffer += rank > RANK_MIN ? "/" : " "
    }
@@ -456,7 +456,7 @@ Board.prototype.toFEN = function () {
 
    // Castle rights 
    if (!this.castleRights[0] && !this.castleRights[1] &&
-	 !this.castleRights[2] && !this.castleRights[3]) {
+            !this.castleRights[2] && !this.castleRights[3]) {
       buffer += "- "
    } else {
       if (this.castleRights[0]) { buffer += "K" }
@@ -493,13 +493,13 @@ Board.prototype.print = function () {
       console.log("+---+---+---+---+---+---+---+---+")
       var line = ""
       for (var file = FILE_MIN; file <= FILE_MAX; file++) {
-	 var square = squareMake(file, rank)
-	 var piece = this.board[square]
-	 if (piece === EMPTY) {
-	    line += ((file + rank) % 2 === 0 ? "|   " : "| . ")
-	 } else {
-	    line += pieceStrings[piece]
-	 }
+         var square = squareMake(file, rank)
+         var piece = this.board[square]
+         if (piece === EMPTY) {
+            line += ((file + rank) % 2 === 0 ? "|   " : "| . ")
+         } else {
+            line += pieceStrings[piece]
+         }
       }
       console.log(line + "|")
    }
@@ -527,12 +527,12 @@ Board.prototype.removePiece = function (square) {
 // of captures, removePiece must be called on the 'to' square before movePiece
 // is called.
 Board.prototype.movePiece = function (from, to) {
-  var piece = this.board[from]
-  this.board[to] = piece
-  this.board[from] = EMPTY
-  if (pieceType[piece] === KING) {
-     this.kingSquares[pieceColor(piece)] = to
-  }
+   var piece = this.board[from]
+   this.board[to] = piece
+   this.board[from] = EMPTY
+   if (pieceType[piece] === KING) {
+      this.kingSquares[pieceColor(piece)] = to
+   }
 }
 
 
@@ -543,13 +543,13 @@ var stepAttackTable = function (deltas) {
 
    for (var file = FILE_MIN; file <= FILE_MAX; file++) {
       for (var rank = RANK_MIN; rank <= RANK_MAX; rank++) {
-	 var s0 = squareMake(file, rank)
-	 for (var i = 0; i < deltas.length; i++) {
-	    var s1 = s0 + deltas[i]
-	    if (b.board[s1] != OUTSIDE) {
-	       result[s1 - s0 + 128] = deltas[i]
-	    }
-	 }
+         var s0 = squareMake(file, rank)
+         for (var i = 0; i < deltas.length; i++) {
+            var s1 = s0 + deltas[i]
+            if (b.board[s1] != OUTSIDE) {
+               result[s1 - s0 + 128] = deltas[i]
+            }
+         }
       }
    }
    return result
@@ -564,13 +564,13 @@ var slideAttackTable = function (deltas) {
 
    for (var file = FILE_MIN; file <= FILE_MAX; file++) {
       for (var rank = RANK_MIN; rank <= RANK_MAX; rank++) {
-	 var s0 = squareMake(file, rank)
-	 for (var i = 0; i < deltas.length; i++) {
-	    var d = deltas[i]
-	    for (var s1 = s0 + d; b.board[s1] != OUTSIDE; s1 += d) {
-	       result[s1 - s0 + 128] = d
-	    }
-	 }
+         var s0 = squareMake(file, rank)
+         for (var i = 0; i < deltas.length; i++) {
+            var d = deltas[i]
+            for (var s1 = s0 + d; b.board[s1] != OUTSIDE; s1 += d) {
+               result[s1 - s0 + 128] = d
+            }
+         }
       }
    }
    return result
@@ -643,40 +643,40 @@ Board.prototype.slowFindCheckers = function () {
       // Pawn checks
       sq = ksq + pawnPush(us) + DELTA_E
       if (this.board[sq] == pieceMake(them, PAWN)) {
-	 this.checkers[this.checkCount++] = sq
+         this.checkers[this.checkCount++] = sq
       }
       sq = ksq + pawnPush(us) + DELTA_W
       if (this.board[sq] == pieceMake(them, PAWN)) {
-	 this.checkers[this.checkCount++] = sq
+         this.checkers[this.checkCount++] = sq
       }
 
       // Knight checks
       for (var i = 0; i < 8; i++) {
-	 var d = KNIGHT_DIRS[i]
-	 sq = ksq + d
-	 if (this.board[sq] == pieceMake(them, KNIGHT)) {
-	    this.checkers[this.checkCount++] = sq
-	 }
+         var d = KNIGHT_DIRS[i]
+         sq = ksq + d
+         if (this.board[sq] == pieceMake(them, KNIGHT)) {
+            this.checkers[this.checkCount++] = sq
+         }
       }
       
       // Bishop/queen checks
       for (var i = 0; i < 8; i++) {
-	 var d = BISHOP_DIRS[i]
-	 for (sq = ksq + d; this.board[sq] == EMPTY; sq += d) { }
-	 if (this.board[sq] == pieceMake(them, BISHOP) ||
-	     this.board[sq] == pieceMake(them, QUEEN)) {
-	    this.checkers[this.checkCount++] = sq
-	 }
+         var d = BISHOP_DIRS[i]
+         for (sq = ksq + d; this.board[sq] == EMPTY; sq += d) { }
+         if (this.board[sq] == pieceMake(them, BISHOP) ||
+             this.board[sq] == pieceMake(them, QUEEN)) {
+            this.checkers[this.checkCount++] = sq
+         }
       }
       
       // Rook/queen checks
       for (var i = 0; i < 8; i++) {
-	 var d = ROOK_DIRS[i]
-	 for (sq = ksq + d; this.board[sq] == EMPTY; sq += d) { }
-	 if (this.board[sq] == pieceMake(them, ROOK) ||
-	     this.board[sq] == pieceMake(them, QUEEN)) {
-	    this.checkers[this.checkCount++] = sq
-	 }
+         var d = ROOK_DIRS[i]
+         for (sq = ksq + d; this.board[sq] == EMPTY; sq += d) { }
+         if (this.board[sq] == pieceMake(them, ROOK) ||
+             this.board[sq] == pieceMake(them, QUEEN)) {
+            this.checkers[this.checkCount++] = sq
+         }
       }
    }
 }
@@ -703,24 +703,24 @@ Board.prototype.findCheckers = function () {
    var d = bishopAttackTable[from - ksq + 128]
    if (d != 0) {
       if (this.squaresBetweenAreEmpty(ksq, from, d)) {
-	 var candidateCheckSquare = this.scanSquare(from, d)
-	 var piece = this.board[candidateCheckSquare]
-	 if (piece == pieceMake(them, BISHOP) ||
-	     piece == pieceMake(them, QUEEN)) {
-	    this.checkers[this.checkCount++] = candidateCheckSquare
-	 }
+         var candidateCheckSquare = this.scanSquare(from, d)
+         var piece = this.board[candidateCheckSquare]
+         if (piece == pieceMake(them, BISHOP) ||
+             piece == pieceMake(them, QUEEN)) {
+            this.checkers[this.checkCount++] = candidateCheckSquare
+         }
       }
    } else {
       d = rookAttackTable[from - ksq + 128]
       if (d != 0) {
-	 if (this.squaresBetweenAreEmpty(ksq, from, d)) {
-	    var candidateCheckSquare = this.scanSquare(from, d)
-	    var piece = this.board[candidateCheckSquare]
-	    if (piece == pieceMake(them, ROOK) ||
-	        piece == pieceMake(them, QUEEN)) {
-	       this.checkers[this.checkCount++] = candidateCheckSquare
-	    }
-	 }
+         if (this.squaresBetweenAreEmpty(ksq, from, d)) {
+            var candidateCheckSquare = this.scanSquare(from, d)
+            var piece = this.board[candidateCheckSquare]
+            if (piece == pieceMake(them, ROOK) ||
+                piece == pieceMake(them, QUEEN)) {
+               this.checkers[this.checkCount++] = candidateCheckSquare
+            }
+         }
       }
    }
 }
@@ -770,10 +770,10 @@ Board.prototype.doMove = function (move) {
    if (pieceType(this.board[from]) == PAWN) {
       result.rule50Counter = 0
       if (Math.abs(to - from) == DELTA_N + DELTA_N) {
-	 if (this.board[to + DELTA_W] == pieceMake(them, PAWN) ||
-	    this.board[to + DELTA_E] == pieceMake(them, PAWN)) {
-	    result.epSquare = (to + from) / 2
-	 }
+         if (this.board[to + DELTA_W] == pieceMake(them, PAWN) ||
+             this.board[to + DELTA_E] == pieceMake(them, PAWN)) {
+            result.epSquare = (to + from) / 2
+         }
       }
    }
 
@@ -797,13 +797,13 @@ Board.prototype.doMove = function (move) {
    // For castling moves, also move the rook.  
    if (moveIsCastle(move)) {
       if (moveIsKingsideCastle(move)) {
-	 result.movePiece(
-	    squareMake(FILE_MAX, RANK_MIN + 7 * us), 
-	    squareMake(FILE_MAX - 2, RANK_MIN + 7 * us))
+         result.movePiece(
+            squareMake(FILE_MAX, RANK_MIN + 7 * us), 
+            squareMake(FILE_MAX - 2, RANK_MIN + 7 * us))
       } else { 
-	 result.movePiece(
-	    squareMake(FILE_MIN, RANK_MIN + 7 * us), 
-	    squareMake(FILE_MIN + 3, RANK_MIN + 7 * us)) 
+         result.movePiece(
+            squareMake(FILE_MIN, RANK_MIN + 7 * us), 
+            squareMake(FILE_MIN + 3, RANK_MIN + 7 * us)) 
       }
    }
 
@@ -867,13 +867,13 @@ Board.prototype.squareIsAttacked = function (square, color) {
 
    for (var i = 0; i < 8; i++) {
       if (this.board[square + KNIGHT_DIRS[i]] == pieceMake(color, KNIGHT)) {
-	 return true
+         return true
       }
    }
 
    for (var i = 0; i < 8; i++) {
       if (this.board[square + QUEEN_DIRS[i]] == pieceMake(color, KING)) {
-	 return true
+         return true
       }
    }
 
@@ -884,11 +884,11 @@ Board.prototype.squareIsAttacked = function (square, color) {
    for (var i = 0; i < 4; i++) {
       var candidate = this.scan(square, BISHOP_DIRS[i])
       if (candidate == bishop || candidate == queen) {
-	 return true
+         return true
       }
       candidate = this.scan(square, ROOK_DIRS[i])
       if (candidate == rook || candidate == queen) {
-	 return true
+         return true
       }
    }
    return false
@@ -906,20 +906,20 @@ Board.prototype.isPinned = function (square) {
    var d = bishopAttackTable[square - ksq + 128]
    if (d != 0) {
       if (this.squaresBetweenAreEmpty(ksq, square, d)) {
-	 var candidatePinner = this.scan(square, d)
-	 if (candidatePinner == bishop || candidatePinner == queen) {
-	    return d
-	 }
+         var candidatePinner = this.scan(square, d)
+         if (candidatePinner == bishop || candidatePinner == queen) {
+            return d
+         }
       }
    } else {
       d = rookAttackTable[square - ksq + 128]
       if (d != 0) {
-	 if (this.squaresBetweenAreEmpty(ksq, square, d)) {
-	    var candidatePinner = this.scan(square, d)
-	    if (candidatePinner == rook || candidatePinner == queen) {
-	       return d
-	    }
-	 }
+         if (this.squaresBetweenAreEmpty(ksq, square, d)) {
+            var candidatePinner = this.scan(square, d)
+            if (candidatePinner == rook || candidatePinner == queen) {
+               return d
+            }
+         }
       }
    }
    return false
@@ -962,68 +962,68 @@ Board.prototype.generatePawnMovesFrom = function (square) {
       var result = []
 
       if (!pin || pin == DELTA_N) {
-	 if (pawnRank == RANK_MIN + 1) {
-	    if (this.board[square + push] == EMPTY) {
-	       result.push(moveMake(square, square + push))
-	       if (this.board[square + 2 * push] == EMPTY) {
-		  result.push(moveMake(square, square + 2 * push))
-	       }
-	    }
-	 } else if (pawnRank == RANK_MAX - 1) {
-	    if (this.board[square + push] == EMPTY) {
-	       for (var p = pieceMake(us, QUEEN); p >= pieceMake(us, KNIGHT); p--) {
-		  result.push(moveMakePromotion(square, square + push, p))
-	       
-	       }
-	    }
-	 } else {
-	    if (this.board[square + push] == EMPTY) {
-	       result.push(moveMake(square, square + push))
-	    }
-	 }
+         if (pawnRank == RANK_MIN + 1) {
+            if (this.board[square + push] == EMPTY) {
+               result.push(moveMake(square, square + push))
+               if (this.board[square + 2 * push] == EMPTY) {
+                  result.push(moveMake(square, square + 2 * push))
+               }
+            }
+         } else if (pawnRank == RANK_MAX - 1) {
+            if (this.board[square + push] == EMPTY) {
+               for (var p = pieceMake(us, QUEEN); p >= pieceMake(us, KNIGHT); p--) {
+                  result.push(moveMakePromotion(square, square + push, p))
+                  
+               }
+            }
+         } else {
+            if (this.board[square + push] == EMPTY) {
+               result.push(moveMake(square, square + push))
+            }
+         }
       }
 
       var d
       d = push + DELTA_E
       if (!pin || Math.abs(d) == pin) {
          if (pieceColor(this.board[square + d]) == them) {
-	    if (pawnRank == RANK_MAX - 1) {
-	       for (var p = pieceMake(us, QUEEN); p >= pieceMake(us, KNIGHT); p--) {
-		  result.push(moveMakePromotion(square, square + d, p))
-	       }
-	    } else {
-	       result.push(moveMake(square, square + d, p))
-	    }
+            if (pawnRank == RANK_MAX - 1) {
+               for (var p = pieceMake(us, QUEEN); p >= pieceMake(us, KNIGHT); p--) {
+                  result.push(moveMakePromotion(square, square + d, p))
+               }
+            } else {
+               result.push(moveMake(square, square + d, p))
+            }
          }
       }
       d = push + DELTA_W
       if (!pin || Math.abs(d) == pin) {
-	 if (pieceColor(this.board[square + d]) == them) {
-	    if (pawnRank == RANK_MAX - 1) {
-	       for (var p = pieceMake(us, QUEEN); p >= pieceMake(us, KNIGHT); p--) {
-		  result.push(moveMakePromotion(square, square + d, p))
-	       }
-	    } else {
-	       result.push(moveMake(square, square + d, p))
-	    }
-	 }
+         if (pieceColor(this.board[square + d]) == them) {
+            if (pawnRank == RANK_MAX - 1) {
+               for (var p = pieceMake(us, QUEEN); p >= pieceMake(us, KNIGHT); p--) {
+                  result.push(moveMakePromotion(square, square + d, p))
+               }
+            } else {
+               result.push(moveMake(square, square + d, p))
+            }
+         }
       }
 
       if (this.epSquare != SQUARE_NONE) {
-	 if (this.pieceAttacksSquare(square, this.epSquare)) {
-	    var tmp1 = this.board[square]
-	    var capsq = squareMake(squareFile(this.epSquare), squareRank(square))
-	    var tmp2 = this.board[capsq]
-	    this.board[square] = EMPTY;
-	    this.board[capsq] = EMPTY;
-	    this.board[this.epSquare] = tmp1
-	    if (!this.squareIsAttacked(this.kingSquares[us], them)) {
-	       result.push(moveMakeEp(square, this.epSquare))
-	    }
-	    this.board[this.epSquare] = EMPTY
-	    this.board[capsq] = tmp2
-	    this.board[square] = tmp1
-	 }
+         if (this.pieceAttacksSquare(square, this.epSquare)) {
+            var tmp1 = this.board[square]
+            var capsq = squareMake(squareFile(this.epSquare), squareRank(square))
+            var tmp2 = this.board[capsq]
+            this.board[square] = EMPTY;
+            this.board[capsq] = EMPTY;
+            this.board[this.epSquare] = tmp1
+            if (!this.squareIsAttacked(this.kingSquares[us], them)) {
+               result.push(moveMakeEp(square, this.epSquare))
+            }
+            this.board[this.epSquare] = EMPTY
+            this.board[capsq] = tmp2
+            this.board[square] = tmp1
+         }
       }
 
       return result
@@ -1038,11 +1038,11 @@ Board.prototype.generateKnightMovesFrom = function (square) {
       var them = oppositeColor(this.sideToMove)
 
       for (var i = 0; i < 8; i++) {
-	 var d = KNIGHT_DIRS[i]
-	 if (this.board[square + d] == EMPTY ||
+         var d = KNIGHT_DIRS[i]
+         if (this.board[square + d] == EMPTY ||
              pieceColor(this.board[square + d]) == them) {
-	    result.push(moveMake(square, square + d))
-	 }
+            result.push(moveMake(square, square + d))
+         }
       } 
       return result
    }
@@ -1058,16 +1058,16 @@ Board.prototype.generateBishopMovesFrom = function (square) {
       var result = []
       var them = oppositeColor(this.sideToMove)
       for (var i = 0; i < 4; i++) {
-	 var d = BISHOP_DIRS[i]
-	 if (!pin || pin == Math.abs(d)) {  
-	    var s
-	    for (s = square + d; this.board[s] == EMPTY; s += d) {
-	       result.push(moveMake(square, s))
-	    }
-	    if (pieceColor(this.board[s]) == them) {
-	       result.push(moveMake(square, s))
-	    }
-	 }
+         var d = BISHOP_DIRS[i]
+         if (!pin || pin == Math.abs(d)) {  
+            var s
+            for (s = square + d; this.board[s] == EMPTY; s += d) {
+               result.push(moveMake(square, s))
+            }
+            if (pieceColor(this.board[s]) == them) {
+               result.push(moveMake(square, s))
+            }
+         }
       }
       return result
    }
@@ -1083,15 +1083,15 @@ Board.prototype.generateRookMovesFrom = function (square) {
       var result = []
       var them = oppositeColor(this.sideToMove)
       for (var i = 0; i < 4; i++) {
-	 var d = ROOK_DIRS[i]
-	 if (!pin || pin == Math.abs(d)) {  
-	    for (var s = square + d; this.board[s] == EMPTY; s += d) {
-	       result.push(moveMake(square, s))
-	    }
-	    if (pieceColor(this.board[s]) == them) {
-	       result.push(moveMake(square, s))
-	    }
-	 }
+         var d = ROOK_DIRS[i]
+         if (!pin || pin == Math.abs(d)) {  
+            for (var s = square + d; this.board[s] == EMPTY; s += d) {
+               result.push(moveMake(square, s))
+            }
+            if (pieceColor(this.board[s]) == them) {
+               result.push(moveMake(square, s))
+            }
+         }
       }
       return result
    }
@@ -1105,12 +1105,12 @@ Board.prototype.generateQueenMovesFrom = function (square) {
    for (var i = 0; i < 8; i++) {
       var d = QUEEN_DIRS[i]
       if (!pin || pin == Math.abs(d)) {  
-	 for (var s = square + d; this.board[s] == EMPTY; s += d) {
-	    result.push(moveMake(square, s))
-	 }
-	 if (pieceColor(this.board[s]) == them) {
-	    result.push(moveMake(square, s))
-	 }
+         for (var s = square + d; this.board[s] == EMPTY; s += d) {
+            result.push(moveMake(square, s))
+         }
+         if (pieceColor(this.board[s]) == them) {
+            result.push(moveMake(square, s))
+         }
       }
    }
    return result
@@ -1144,24 +1144,24 @@ Board.prototype.generateKingMovesFrom = function (square) {
    for (var i = 0; i < 8; i++) {
       var d = QUEEN_DIRS[i]
       if ((this.board[square + d] == EMPTY ||
-	   pieceColor(this.board[square + d]) == them) &&
-	  !this.squareIsAttacked(square + d, them))   {
-	 result.push(moveMake(square, square + d))
+           pieceColor(this.board[square + d]) == them) &&
+             !this.squareIsAttacked(square + d, them))   {
+         result.push(moveMake(square, square + d))
       }
    }
 
    if (this.canCastleKingside(this.sideToMove)) {
       if (this.board[square + 1] == EMPTY && this.board[square + 2] == EMPTY &&
-	  !this.squareIsAttacked(square + 1, them) &&
-	  !this.squareIsAttacked(square + 2, them)) {
-	 result.push(moveMakeCastle(square, square + 2))
+             !this.squareIsAttacked(square + 1, them) &&
+             !this.squareIsAttacked(square + 2, them)) {
+         result.push(moveMakeCastle(square, square + 2))
       }
    }
    if (this.canCastleQueenside(this.sideToMove)) {
       if (this.board[square - 1] == EMPTY && this.board[square - 2] == EMPTY &&
-	  this.board[square - 3] == EMPTY &&
-	  !this.squareIsAttacked(square - 1, them) && 
-	  !this.squareIsAttacked(square - 2, them)) {
+          this.board[square - 3] == EMPTY &&
+             !this.squareIsAttacked(square - 1, them) && 
+             !this.squareIsAttacked(square - 2, them)) {
          result.push(moveMakeCastle(square, square - 2))
       }
    }
@@ -1208,51 +1208,51 @@ Board.prototype.generatePawnEvasionsFrom = function (square) {
 
       // Captures can only be legal evasions if they capture the checking piece.  
       if (this.pieceAttacksSquare(square, chsq)) {
-	 if (pawnRank < RANK_MAX - 1) {
-	    result.push(moveMake(square, chsq))
-	 } else {
-	    for (var p = pieceMake(us, QUEEN); p >= pieceMake(us, KNIGHT); p--) {
-	       result.push(moveMakePromotion(square, chsq, p))
-	    }
-	 }
+         if (pawnRank < RANK_MAX - 1) {
+            result.push(moveMake(square, chsq))
+         } else {
+            for (var p = pieceMake(us, QUEEN); p >= pieceMake(us, KNIGHT); p--) {
+               result.push(moveMakePromotion(square, chsq, p))
+            }
+         }
       }
 
       if (isSlider(this.board[chsq]) && squareDistance(chsq, ksq) > 1) {
-	 if (this.board[square + push] == EMPTY) {
-	    if (colinearSquares(chsq, square + push, ksq)) {
-	       if (pawnRank < RANK_MAX - 1) {
-		  result.push(moveMake(square, square + push))
-	       } else {
-		  for (var p = pieceMake(us, QUEEN); p >= pieceMake(us, KNIGHT); p--) {
-		     result.push(moveMakePromotion(square, square + push, p))
-		  }
-	       }
-	    }
-	    if (pawnRank == RANK_MIN + 1 && this.board[square + 2*push] == EMPTY &&
-	        colinearSquares(chsq, square + 2 * push, ksq)) {
-	       result.push(moveMake(square, square + 2 * push))
-	    }
-	 }
+         if (this.board[square + push] == EMPTY) {
+            if (colinearSquares(chsq, square + push, ksq)) {
+               if (pawnRank < RANK_MAX - 1) {
+                  result.push(moveMake(square, square + push))
+               } else {
+                  for (var p = pieceMake(us, QUEEN); p >= pieceMake(us, KNIGHT); p--) {
+                     result.push(moveMakePromotion(square, square + push, p))
+                  }
+               }
+            }
+            if (pawnRank == RANK_MIN + 1 && this.board[square + 2*push] == EMPTY &&
+                colinearSquares(chsq, square + 2 * push, ksq)) {
+               result.push(moveMake(square, square + 2 * push))
+            }
+         }
       }
 
       if (this.epSquare != SQUARE_NONE) {
-	 if (this.pieceAttacksSquare(square, this.epSquare)) {
-	    var tmp1 = this.board[square]
-	    var capsq = squareMake(squareFile(this.epSquare), squareRank(square))
-	    var tmp2 = this.board[capsq]
-	    this.board[square] = EMPTY;
-	    this.board[capsq] = EMPTY;
-	    this.board[this.epSquare] = tmp1
-	    if (!this.squareIsAttacked(this.kingSquares[us], them)) {
-	       result.push(moveMakeEp(square, this.epSquare))
-	    }
-	    this.board[this.epSquare] = EMPTY
-	    this.board[capsq] = tmp2
-	    this.board[square] = tmp1
-	 }
-     }
+         if (this.pieceAttacksSquare(square, this.epSquare)) {
+            var tmp1 = this.board[square]
+            var capsq = squareMake(squareFile(this.epSquare), squareRank(square))
+            var tmp2 = this.board[capsq]
+            this.board[square] = EMPTY;
+            this.board[capsq] = EMPTY;
+            this.board[this.epSquare] = tmp1
+            if (!this.squareIsAttacked(this.kingSquares[us], them)) {
+               result.push(moveMakeEp(square, this.epSquare))
+            }
+            this.board[this.epSquare] = EMPTY
+            this.board[capsq] = tmp2
+            this.board[square] = tmp1
+         }
+      }
 
-     return result
+      return result
    }
 }
 
@@ -1268,20 +1268,20 @@ Board.prototype.generateKnightEvasionsFrom = function (square) {
 
       // Capture checking piece, if possible
       if (this.pieceAttacksSquare(square, chsq)) {
-	 result.push(moveMake(square, chsq))
+         result.push(moveMake(square, chsq))
       }
 
       var checkerType = pieceType(this.board[chsq])
       var ksq = this.kingSquares[this.sideToMove]
       if (isSlider(checkerType) && squareDistance(chsq, ksq) > 1) { 
-	 // Generate blocking evasions
-	 for (var i = 0; i < 8; i++) {
-	    var d = KNIGHT_DIRS[i]
-	    if (this.board[square + d] == EMPTY && 
-		colinearSquares(chsq, square + d, ksq)) {
-	       result.push(moveMake(square, square + d))
-	    }
-	 }
+         // Generate blocking evasions
+         for (var i = 0; i < 8; i++) {
+            var d = KNIGHT_DIRS[i]
+            if (this.board[square + d] == EMPTY && 
+                colinearSquares(chsq, square + d, ksq)) {
+               result.push(moveMake(square, square + d))
+            }
+         }
       } 
       return result
    }
@@ -1299,21 +1299,21 @@ Board.prototype.generateBishopEvasionsFrom = function (square) {
       
       // Capture checking piece, if possible
       if (this.pieceAttacksSquare(square, chsq)) {
-	 result.push(moveMake(square, chsq))
+         result.push(moveMake(square, chsq))
       }
 
       var checkerType = pieceType(this.board[chsq])
       var ksq = this.kingSquares[this.sideToMove]
       if (isSlider(checkerType) && squareDistance(chsq, ksq) > 1) {
-	 // Generate blocking evasions 
-	 for (var i = 0; i < 4; i++) {
-	    var d = BISHOP_DIRS[i]
-	    for (var to = square + d; this.board[to] == EMPTY; to += d) {
-	       if (colinearSquares(chsq, to, ksq)) {
-		  result.push(moveMake(square, to))
-	       }
-	    }
-	 }
+         // Generate blocking evasions 
+         for (var i = 0; i < 4; i++) {
+            var d = BISHOP_DIRS[i]
+            for (var to = square + d; this.board[to] == EMPTY; to += d) {
+               if (colinearSquares(chsq, to, ksq)) {
+                  result.push(moveMake(square, to))
+               }
+            }
+         }
       }
       return result
    }
@@ -1331,21 +1331,21 @@ Board.prototype.generateRookEvasionsFrom = function (square) {
       
       // Capture checking piece, if possible
       if (this.pieceAttacksSquare(square, chsq)) {
-	 result.push(moveMake(square, chsq))
+         result.push(moveMake(square, chsq))
       }
 
       var checkerType = pieceType(this.board[chsq])
       var ksq = this.kingSquares[this.sideToMove]
       if (isSlider(checkerType) && squareDistance(chsq, ksq) > 1) {
-	 // Generate blocking evasions 
-	 for (var i = 0; i < 4; i++) {
-	    var d = ROOK_DIRS[i]
-	    for (var to = square + d; this.board[to] == EMPTY; to += d) {
-	       if (colinearSquares(chsq, to, ksq)) {
-		  result.push(moveMake(square, to))
-	       }
-	    }
-	 }
+         // Generate blocking evasions 
+         for (var i = 0; i < 4; i++) {
+            var d = ROOK_DIRS[i]
+            for (var to = square + d; this.board[to] == EMPTY; to += d) {
+               if (colinearSquares(chsq, to, ksq)) {
+                  result.push(moveMake(square, to))
+               }
+            }
+         }
       }
       return result
    }
@@ -1363,21 +1363,21 @@ Board.prototype.generateQueenEvasionsFrom = function (square) {
       
       // Capture checking piece, if possible
       if (this.pieceAttacksSquare(square, chsq)) {
-	 result.push(moveMake(square, chsq))
+         result.push(moveMake(square, chsq))
       }
 
       var checkerType = pieceType(this.board[chsq])
       var ksq = this.kingSquares[this.sideToMove]
       if (isSlider(checkerType) && squareDistance(chsq, ksq) > 1) {
-	 // Generate blocking evasions 
-	 for (var i = 0; i < 8; i++) {
-	    var d = QUEEN_DIRS[i]
-	    for (var to = square + d; this.board[to] == EMPTY; to += d) {
-	       if (colinearSquares(chsq, to, ksq)) {
-		  result.push(moveMake(square, to))
-	       }
-	    }
-	 }
+         // Generate blocking evasions 
+         for (var i = 0; i < 8; i++) {
+            var d = QUEEN_DIRS[i]
+            for (var to = square + d; this.board[to] == EMPTY; to += d) {
+               if (colinearSquares(chsq, to, ksq)) {
+                  result.push(moveMake(square, to))
+               }
+            }
+         }
       }
       return result
    }
@@ -1396,9 +1396,9 @@ Board.prototype.generateKingEvasionsFrom = function (square) {
       var d = QUEEN_DIRS[i]
       var cap = this.board[square + d]
       if (cap == EMPTY || pieceColor(cap) == them) {
-	 if (!this.squareIsAttacked(square + d, them)) {
-	    result.push(moveMake(square, square + d))
-	 }
+         if (!this.squareIsAttacked(square + d, them)) {
+            result.push(moveMake(square, square + d))
+         }
       }
    }
 
@@ -1422,7 +1422,7 @@ Board.prototype.moves = function () {
    var result = []
    for (var f = FILE_MIN; f <= FILE_MAX; f++) {
       for (var r = RANK_MIN; r <= RANK_MAX; r++) {
-	 result = result.concat(this.movesFrom(squareMake(f, r)))
+         result = result.concat(this.movesFrom(squareMake(f, r)))
       }
    }
    return result
@@ -1438,7 +1438,7 @@ Board.prototype.perft = function (depth) {
       var ms = this.moves()
       var result = 0
       for (var i = 0; i < ms.length; i++) {
-	 result += this.doMove(ms[i]).perft(depth - 1)
+         result += this.doMove(ms[i]).perft(depth - 1)
       }
       return result
    }
@@ -1471,8 +1471,8 @@ Board.prototype.movesForPieceTypeToSquare = function (piece, square) {
    var result = []
    for (var i = 0; i < ms.length; i++) {
       if (moveTo(ms[i]) == square && 
-	  pieceType(this.board[moveFrom(ms[i])] == pieceType(piece))) {
-	 result.push(ms[i])
+          pieceType(this.board[moveFrom(ms[i])] == pieceType(piece))) {
+         result.push(ms[i])
       }
    }
    return result
@@ -1494,37 +1494,37 @@ Board.prototype.moveToSAN = function (move) {
       result += "O-O-O"
    } else if (pieceType(piece) == PAWN) {
       if (squareFile(from) != squareFile(to)) { // Capture
-	 result += fileToString(squareFile(from)) + "x"
+         result += fileToString(squareFile(from)) + "x"
       }
       result += squareToString(to)
       if (promotion) {
-	 result += "=" + pieceToString(promotion).toUpperCase()
+         result += "=" + pieceToString(promotion).toUpperCase()
       }
    } else {
       result += pieceToString(piece).toUpperCase()
       var moves = this.movesForPieceTypeToSquare(piece, to)
       if (moves.length > 1) {
-	 // Several matching moves, need disambiguation character(s) 
-	 var file = squareFile(from), rank = squareRank(from)
-	 var sameFileCount = 0, sameRankCount = 0
-	 for (var i = 0; i < moves.length; i++) {
-	    if (squareFile(moveFrom(moves[i])) == file) {
-	       sameFileCount++;
-	    }
-	    if (squareRank(moveFrom(moves[i])) == rank) {
-	       sameRankCount++;
-	    }
-	 }
-	 if (sameFileCount == 1) {
-	    result += fileToString(file)
-	 } else if (sameRankCount == 1) {
-	    result += rankToString(rank)
-	 } else {
-	    result += squareToString(from)
-	 }
+         // Several matching moves, need disambiguation character(s) 
+         var file = squareFile(from), rank = squareRank(from)
+         var sameFileCount = 0, sameRankCount = 0
+         for (var i = 0; i < moves.length; i++) {
+            if (squareFile(moveFrom(moves[i])) == file) {
+               sameFileCount++
+            }
+            if (squareRank(moveFrom(moves[i])) == rank) {
+               sameRankCount++
+            }
+         }
+         if (sameFileCount == 1) {
+            result += fileToString(file)
+         } else if (sameRankCount == 1) {
+            result += rankToString(rank)
+         } else {
+            result += squareToString(from)
+         }
       }
       if (this.board[to] != EMPTY) {
-	 result += "x"
+         result += "x"
       }
       result += squareToString(to)
    }
@@ -1547,16 +1547,16 @@ Board.prototype.moveFromSAN = function (str) {
    // Castling 
    if (str.length >= 5 && str.substring(0, 5) == "O-O-O") {
       for (var i = 0; i < moves.length; i++) {
-	 if (moveIsQueensideCastle(moves[i])) {
-	    return moves[i]
-	 }
+         if (moveIsQueensideCastle(moves[i])) {
+            return moves[i]
+         }
       }
       return null
    } else if (str.length >= 3 && str.substring(0, 3) == "O-O") {
       for (var i = 0; i < moves.length; i++) {
-	 if (moveIsKingsideCastle(moves[i])) {
-	    return moves[i]
-	 }
+         if (moveIsKingsideCastle(moves[i])) {
+            return moves[i]
+         }
       }
       return null
    }
@@ -1582,9 +1582,9 @@ Board.prototype.moveFromSAN = function (str) {
    if (left < right) {
       pt = pieceFromString(s[left]) //"NBRKQ".indexOf(s.substring(left, left + 1))
       if (pt != -1) {
-	 left++;
+         left++
       } else {
-	 pt = PAWN
+         pt = PAWN
       }
    }
 
@@ -1592,7 +1592,7 @@ Board.prototype.moveFromSAN = function (str) {
    if (left < right) {
       to = squareFromString(s.substring(right - 1, right + 1))
       if (to == SQUARE_NONE) {
-	 return null
+         return null
       }
       right -= 2
    } else {
@@ -1603,10 +1603,10 @@ Board.prototype.moveFromSAN = function (str) {
    if (left <= right) {
       fromFile = fileFromString(s[left])
       if (fromFile != -1) {
-	 left++;
+         left++
       }
       if (left <= right) {
-	 fromRank = rankFromString(s[left])
+         fromRank = rankFromString(s[left])
       }
    }
 
@@ -1617,19 +1617,19 @@ Board.prototype.moveFromSAN = function (str) {
       var m = moves[i]
       var match = true
       if (pieceType(this.board[moveFrom(m)]) != pt) {
-	 match = false
+         match = false
       } else if (moveTo(m) != to) {
-	 match = false
+         match = false
       } else if (promotion != -1 && promotion != movePromotion(m)) {
-	 match = false
+         match = false
       } else if (fromFile != FILE_NONE && fromFile != squareFile(moveFrom(m))) {
-	 match = false
+         match = false
       } else if (fromRank != RANK_NONE && fromRank != squareRank(moveFrom(m))) {
-	 match = false
+         match = false
       }
       if (match) {
-	 move = m
-	 matches++
+         move = m
+         matches++
       }
    }
 
