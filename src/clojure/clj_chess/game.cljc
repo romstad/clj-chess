@@ -106,6 +106,13 @@
   ([game] (game-zip game (-> game :root-node :node-id))))
 
 
+(defn- zip-remove-children
+  "Takes a game tree zipper and returns a zipper for a modified game tree
+  where all the child nodes at the current location are removed."
+  [zipper]
+  (zip/edit zipper #(dissoc % :children)))
+
+
 (defn- zip-add-move
   "Takes a zipper, a move function (a function that, given a board
   and some other value, translates that value to a chess move),
@@ -151,11 +158,7 @@
   [zipper key value]
   (zip/edit zipper assoc-in [key] value))
 
-(defn- zip-remove-children
-  "Takes a game tree zipper and returns a zipper for a modified game tree
-  where all the child nodes at the current location are removed."
-  [zipper]
-  (zip/edit zipper #(dissoc % :children)))
+
 
 (defn zip-promote-node
   "Takes a game tree zipper and returns a zipper for a modified game tree
