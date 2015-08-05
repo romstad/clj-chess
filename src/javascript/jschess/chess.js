@@ -1482,7 +1482,7 @@ Board.prototype.isDraw = function () {
 }
 
 Board.prototype.isTerminal = function () {
-   return isMate() || isDraw()
+   return this.isMate() || this.isDraw()
 }
 
 Board.prototype.movesForPieceTypeToSquare = function (piece, square) {
