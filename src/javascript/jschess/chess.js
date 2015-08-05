@@ -339,6 +339,8 @@ chess.Board = function () {
    for (var s = 0; s < 256; s++) { this.board[s] = OUTSIDE }
    for (var i = 0; i < 64; i++) { this.board[squareExpand(i)] = EMPTY }
    this.kingSquares = [SQUARE_NONE, SQUARE_NONE]
+   this.pieceCount = [0, 0, 0, 0, 0, 0, 0, 0,
+		      0, 0, 0, 0, 0, 0, 0]
 }
 
 var Board = chess.Board;
@@ -366,12 +368,7 @@ Board.fromFEN = function (fen) {
          file = FILE_MIN;
          rank--;
       } else { // Must be a piece, unless the FEN string is broken
-         var piece = pieceFromString(s[i])
-         var square = squareMake(file, rank)
-         b.board[square] = piece
-         if (pieceType(piece) === KING) {
-            b.kingSquares[pieceColor(piece)] = square
-         }
+	 b.putPiece(pieceFromString(s[i]), squareMake(file, rank))
          file++
       }
    }
@@ -511,6 +508,7 @@ Board.prototype.print = function () {
 // Add a piece to the given square.
 Board.prototype.putPiece = function (piece, square) {
    this.board[square] = piece
+   this.pieceCount[piece]++
    if (pieceType(piece) === KING) {
       this.kingSquares[pieceColor(piece)] = square
    }
@@ -519,6 +517,7 @@ Board.prototype.putPiece = function (piece, square) {
 
 // Remove the piece on the given square.
 Board.prototype.removePiece = function (square) {
+   this.pieceCount[this.board[square]]--
    this.board[square] = EMPTY
 }
 
@@ -753,6 +752,7 @@ Board.prototype.doMove = function (move) {
    result.key = 0
    result.board = this.board.slice(0)
    result.kingSquares = this.kingSquares.slice(0)
+   result.pieceCount = this.pieceCount.slice(0)
 
    var us = this.sideToMove, them = result.sideToMove
    var from = moveFrom(move), to = moveTo(move)
@@ -1465,6 +1465,25 @@ Board.prototype.isStalemate = function () {
    return !this.isCheck && this.moves().length == 0
 }
 
+Board.prototype.isRule50Draw = function () {
+   return this.rule50Counter >= 100
+}
+
+Board.prototype.isMaterialDraw = function () {
+   return this.pieceCount[WP] + this.pieceCount[WR] + this.pieceCount[WQ] +
+      this.pieceCount[BP] + this.pieceCount[BR] + this.pieceCount[BQ] == 0 &&
+      this.pieceCount[WN] + this.pieceCount[WB] + this.pieceCount[BN] +
+      this.pieceCount[BB] <= 1
+}
+
+Board.prototype.isDraw = function () {
+   // TODO: repetition draws!
+   return this.isRule50Draw() || this.isMaterialDraw() || this.isStalemate()
+}
+
+Board.prototype.isTerminal = function () {
+   return isMate() || isDraw()
+}
 
 Board.prototype.movesForPieceTypeToSquare = function (piece, square) {
    var ms = this.moves()
