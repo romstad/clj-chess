@@ -114,10 +114,10 @@
   [board]
   (into #{}
         (concat
-          (for [[c k] (map vector (range) [:white-oo :black-oo])
+          (for [[c k] [[:white :white-oo] [:black :black-oo]]
                 :when (can-castle-kingside? board c)]
             k)
-          (for [[c k] (map vector (range) [:white-ooo :black-ooo])
+          (for [[c k] [[:white :white-ooo] [:black :black-ooo]]
                 :when (can-castle-queenside? board c)]
             k))))
 
