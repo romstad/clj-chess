@@ -99,6 +99,28 @@
   [board square]
   (.pieceOn board square))
 
+(defn can-castle-kingside?
+  "Tests whether the given side still has the right to castle kingside."
+  [board side]
+  (.canCastleKingside board (if (= side :white) 0 1)))
+
+(defn can-castle-queenside?
+  "Tests whether the given side still has the right to castle kingside."
+  [board side]
+  (.canCastleQueenside board (if (= side :white) 0 1)))
+
+(defn castle-rights
+  "Castle rights, a subset of #{:white-oo :white-ooo :black-oo :black-ooo}"
+  [board]
+  (into #{}
+        (concat
+          (for [[c k] (map vector (range) [:white-oo :black-oo])
+                :when (can-castle-kingside? board c)]
+            k)
+          (for [[c k] (map vector (range) [:white-ooo :black-ooo])
+                :when (can-castle-queenside? board c)]
+            k))))
+
 (defn last-move
   "The last move played to reach this board position, or nil if we are at
   the beginning of the game."
