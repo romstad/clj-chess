@@ -10,7 +10,7 @@
   (ip/parser
     "
     (* A PGN game consists of PGN headers followed by the move text. *)
-    game = headers <whitespace> movetext
+    game = headers <whitespace> moves
     headers = {header [<whitespace>]}
 
     (* Each header consists of a header name and a corresponding value, *)
@@ -21,7 +21,7 @@
 
     (* Movetext consists of moves (symbols), numbers, periods, comments,    *)
     (* variations, numeric annotation glyphs, and game termination markers. *)
-    movetext = {(termination-marker / <number> / <'.'> / symbol / comment / variation / nag / semicolon-comment / percent-comment / <whitespace>)}
+    moves = {(termination-marker / <number> / <'.'> / symbol / comment / variation / nag / semicolon-comment / percent-comment / <whitespace>)}
 
     (* Comments are arbitrary strings surrounded by curly braces. *)
     comment = <'{'> comment-content <'}'>
@@ -35,17 +35,13 @@
     <percent-comment> = <'%'> <{!'\n' #'[\\S\\s]'}> <'\n'>
 
     (* Variations are contained in parens, and can be nested recursively. *)
-    <variation> = <'('> movetext <')'>
+    <variation> = <'('> moves <')'>
 
     nag = ('$' #'[0-9]+') | '!' | '?' | '!!' | '??' | '!?' | '?!'
 
     (* Game termination markers, '1-0', '0-1', '1/2-1/2' or '*', where *)
     (* the asterisk indicates an incomplete game or an unknown result. *)
-    termination-marker = white-wins | black-wins | draw | unknown-result
-    white-wins = <'1-0'>
-    black-wins = <'0-1'>
-    draw = <'1/2-1/2'>
-    unknown-result = <'*'>
+    termination-marker = '1-0' | '0-1' | '1/2-1/2' | '*'
 
     (* Strings are a little messy, since they are surrounded by double *)
     (* quotes, but we also allows a double quote within the string if *)
@@ -58,9 +54,7 @@
     (* immediately followed by a sequence of zero or more symbol continuation *)
     (* characters. These continuation characters are letters, digits, *)
     (* and the special character '_', '+', '-', '#', ':' and '='. *)
-    symbol = symbol-start symbol-continuation
-    <symbol-start> = #'[A-Za-z0-9]'
-    <symbol-continuation> = #'[A-Za-z0-9_+\\-:=#]*'
+    <symbol> = #'[A-Za-z0-9][A-Za-z0-9_+\\-:=#]*'
 
     number = #'[0-9]+'
     whitespace = #'\\s+'
@@ -103,10 +97,4 @@
     (ip/transform pgn-transform
                   #?(:clj parsed-pgn
                      :cljs (vectorize-parsed-pgn parsed-pgn)))))
-
-
-
-
-
-
 
