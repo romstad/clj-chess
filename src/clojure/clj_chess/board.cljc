@@ -121,6 +121,13 @@
                 :when (can-castle-queenside? board c)]
             k))))
 
+(defn parent
+  "The parent board of the current board (i.e. the board as it was before the
+  last move was played), or nil if we're at the beginning of the game."
+  [board]
+  #?(:clj (.getParent board)
+     :cljs (.-parent board)))
+
 (defn last-move
   "The last move played to reach this board position, or nil if we are at
   the beginning of the game."

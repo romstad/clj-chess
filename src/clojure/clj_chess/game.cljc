@@ -568,6 +568,14 @@
        " "
        (tag-value game "Result")))
 
+(defn from-ecn
+  "Creates a game from ECN data."
+  [ecn]
+  (let [game (reduce #(apply set-tag %1 %2)
+                     (new-game)
+                     (rest (second ecn)))]
+    (-> game (add-uci-move-sequence
+               (filter string? (-> ecn (nth 2) rest))))))
 
 (defn from-pgn
   "Creates a game from a PGN string. Doesn't yet handle comments or
