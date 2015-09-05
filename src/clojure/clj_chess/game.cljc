@@ -107,6 +107,17 @@
   ([game] (game-zip game (-> game :root-node :node-id))))
 
 
+(defn- zip-up-to
+  "Takes a game zipper, and returns a zipper obtained by traversing the zipper
+  up until the given node id is reached. Returns nil if this node ID does not
+  occur along the path to the root."
+  [zipper node-id]
+  (cond
+    (nil? zipper) nil
+    (= node-id (:node-id (zip/node zipper))) zipper
+    true (zip-up-to (zip/up zipper) node-id)))
+
+
 (defn- zip-remove-children
   "Takes a game tree zipper and returns a zipper for a modified game tree
   where all the child nodes at the current location are removed."
@@ -159,6 +170,55 @@
   [zipper key value]
   (zip/edit zipper assoc-in [key] value))
 
+
+(defn- zip-add-ecn-data
+  "Takes a game zipper and an ECN data object, and returns a zipper for a
+  modified game where the ECN data is added. The ECN data is either a string
+  representing a move in UCI notation (e.g. \"e2e4\") or a vector where the
+  first element is a keyword representing the data type (currently, :moves,
+  :variation, :comment, :pre-comment and :nag are the supported data types)
+  and the remaining elements are the contents."
+  [zipper data]
+  (cond
+    (string? data)
+    (-> zipper
+        (zip-add-move board/move-from-uci data false)
+        (zip/down)
+        (zip/rightmost))
+
+    (vector? data)
+    (let [[key & values] data
+          zip-add-fragments (fn [zip fs]
+                              (reduce zip-add-ecn-data zip fs))
+          add-pre-comment (fn [zip pre]
+                            (if-not pre
+                              zip
+                              (-> zip
+                                  zip/down
+                                  zip/rightmost
+                                  (zip-add-key-value-pair :pre-comment pre)
+                                  zip/up)))]
+      (case key
+        :comment (zip-add-key-value-pair zipper :comment (first values))
+        :pre-comment (zip-add-key-value-pair zipper :pre-comment (first values))
+        :nag (zip-add-key-value-pair zipper :nag (first values))
+        :moves (-> zipper
+                   (zip-add-fragments values))
+        :variation (let [node-id (:node-id (zip/node (zip/up zipper)))
+                         pre-comment (when (and (vector? (first values))
+                                                (= (first (first values))
+                                                   :pre-comment))
+                                       (second (first values)))]
+                     (-> zipper
+                         zip/up
+                         (zip-add-fragments (if pre-comment
+                                              (rest values)
+                                              values))
+                         (zip-up-to node-id)
+                         (add-pre-comment pre-comment)
+                         zip/down
+                         zip/leftmost))
+        zipper))))
 
 
 (defn zip-promote-node
@@ -570,12 +630,16 @@
 
 (defn from-ecn
   "Creates a game from ECN data."
-  [ecn]
+  [ecn & {:keys [include-annotations?] :or {include-annotations? true}}]
   (let [game (reduce #(apply set-tag %1 %2)
                      (new-game)
                      (rest (second ecn)))]
-    (-> game (add-uci-move-sequence
-               (filter string? (-> ecn (nth 2) rest))))))
+    (if-not include-annotations?
+      (-> game (add-uci-move-sequence
+                 (filter string? (-> ecn (nth 2) rest))))
+      (let [z (zip-add-ecn-data (game-zip game) (nth ecn 2))]
+        (to-beginning
+          (assoc g :root-node (zip/root z)))))))
 
 (defn from-pgn
   "Creates a game from a PGN string. Doesn't yet handle comments or
@@ -587,5 +651,4 @@
                      (rest (second parsed-pgn)))]
     (-> game (add-san-move-sequence
                (filter string? (-> parsed-pgn (nth 2) rest))))))
-
 
