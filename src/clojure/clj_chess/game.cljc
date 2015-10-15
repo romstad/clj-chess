@@ -639,7 +639,7 @@
                  (filter string? (-> ecn (nth 2) rest))))
       (let [z (zip-add-ecn-data (game-zip game) (nth ecn 2))]
         (to-beginning
-          (assoc g :root-node (zip/root z)))))))
+          (assoc game :root-node (zip/root z)))))))
 
 (defn from-pgn
   "Creates a game from a PGN string. Doesn't yet handle comments or

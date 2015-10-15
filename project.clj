@@ -8,7 +8,7 @@
   :resource-paths ["src/javascript"]
   :javac-options ["-target" "1.8" "-source" "1.8"]
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.48"]
+                 [org.clojure/clojurescript "1.7.145"]
                  [instaparse "1.4.1"]
                  [com.lucasbradstreet/instaparse-cljs "1.4.1.0"]
                  [me.raynes/conch "0.8.0"]
