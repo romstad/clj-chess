@@ -12,4 +12,4 @@ pom.xml.asc
 .hgignore
 .hg/
 .idea/
-clj_chess.iml
+*.iml
