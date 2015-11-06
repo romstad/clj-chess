@@ -364,30 +364,32 @@
                 (checking-pieces board))})
 
 
-(defn perft
-  "perft function for testing move generator, see
+#?(:clj
+   (defn perft
+     "perft function for testing move generator, see
   https://chessprogramming.wikispaces.com/Perft"
-  [board depth & [no-pmap]]
-  (cond (= depth 0) 1
-        (= depth 1) (count (moves board))
-        :else (reduce + ((if no-pmap map pmap)
-                          (fn [m] (perft (do-move board m) (- depth 1) true))
-                          (moves board)))))
+     [board depth & [no-pmap]]
+     (cond (= depth 0) 1
+           (= depth 1) (count (moves board))
+           :else (reduce + ((if no-pmap map pmap)
+                            (fn [m] (perft (do-move board m) (- depth 1) true))
+                            (moves board))))))
 
-(defn divide
-  "divide function for testing move generator, see
+#?(:clj
+   (defn divide
+     "divide function for testing move generator, see
   https://chessprogramming.wikispaces.com/Perft"
-  [board depth]
-  (reduce
-    (fn [acc next]
-      (conj acc
-            (conj next (if (empty? acc)
-                         (nth next 1)
-                         (+ (nth (last acc) 2) (nth next 1))))))
-    []
-    (sort
-      #(compare (first %1) (first %2))
-      (pmap (fn [m]
-              [(move-to-uci m)
-               (perft (do-move board m) (- depth 1) true)])
-            (moves board)))))
+     [board depth]
+     (reduce
+      (fn [acc next]
+        (conj acc
+              (conj next (if (empty? acc)
+                           (nth next 1)
+                           (+ (nth (last acc) 2) (nth next 1))))))
+      []
+      (sort
+       #(compare (first %1) (first %2))
+       (pmap (fn [m]
+               [(move-to-uci m)
+                (perft (do-move board m) (- depth 1) true)])
+             (moves board))))))
