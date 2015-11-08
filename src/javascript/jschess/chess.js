@@ -1513,7 +1513,7 @@ Board.prototype.grandParent = function () {
 
 Board.prototype.isRepetitionDraw = function () {
    var repetitionCount = 1
-   for (var b = this.grandParent; b != null; b = b.grandParent) {
+   for (var b = this.grandParent(); b != null; b = b.grandParent()) {
       if (b.key == this.key) {
          repetitionCount++
       }
@@ -1522,7 +1522,7 @@ Board.prototype.isRepetitionDraw = function () {
 }
 
 Board.prototype.isDraw = function () {
-   return this.isRule50Draw() || this.isMaterialDraw() || this.isStalemate() || isRepetitionDraw()
+   return this.isRule50Draw() || this.isMaterialDraw() || this.isStalemate() || this.isRepetitionDraw()
 }
 
 Board.prototype.isTerminal = function () {
@@ -1724,7 +1724,7 @@ Board.prototype.computeKey = function () {
     }
 
     // Castle rights
-    this.castleRights[0] ? 1 : 0
+    var cf = this.castleRights[0] ? 1 : 0
     cf |= this.castleRights[1] ? 2 : 0
     cf |= this.castleRights[2] ? 4 : 0
     cf |= this.castleRights[3] ? 8 : 0
