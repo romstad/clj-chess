@@ -12,5 +12,6 @@
                  [instaparse "1.4.1"]
                  [com.lucasbradstreet/instaparse-cljs "1.4.1.0"]
                  [me.raynes/conch "0.8.0"]
+                 [clj-time "0.11.0"]
                  [org.apache.commons/commons-math3 "3.5"]
                  [org.apache.commons/commons-lang3 "3.4"]])

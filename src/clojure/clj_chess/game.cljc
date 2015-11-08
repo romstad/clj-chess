@@ -5,6 +5,8 @@
             [clojure.zip :as zip]
             #?(:clj [clojure.pprint :refer [cl-format]]
                :cljs [cljs.pprint :refer [cl-format]])
+            #?(:clj [clj-time.core :as time])
+            #?(:clj [clj-time.format :as time-format])
             [clj-chess.board :as board]
             #?(:clj [clj-chess.ecn :as ecn])
             [clj-chess.pgn :as pgn])
@@ -47,6 +49,56 @@
   [game tag-name]
   (second (first (filter #(= tag-name (first %))
                          (game :tags)))))
+
+(defn event
+  "The event of the game, as a string."
+  [game]
+  (tag-value game "Event"))
+
+(defn date [game]
+  "The date the game was played, as a joda.time.DateTime object in Clojure,
+  and a string in ClojureScript."
+  (when-let [d (tag-value game "Date")]
+    #?(:cljs d)
+    #?(:clj
+       (try
+         (time-format/parse (time-format/formatter "YYYY.MM.DD") d)
+         (catch Exception _)))))
+
+(defn round [game]
+  "The tournament round of the game."
+  (tag-value game "Round"))
+
+(defn site [game]
+  "The site of the game."
+  (tag-value game "Site"))
+
+(defn white-player [game]
+  "Name of the white player."
+  (tag-value game "White"))
+
+(defn black-player [game]
+  "Name of the black player."
+  (tag-value game "Black"))
+
+(defn result [game]
+  "The result of the game. Should be one of the strings \"1-0\", \"0-1\",
+  \"1/2-1/2\" and \"*\"."
+  (tag-value game "Result"))
+
+(defn white-elo [game]
+  "The Elo of the white player (as an integer), or nil."
+  (when-let [elo (tag-value game "WhiteElo")]
+    (try
+      (read-string elo)
+      (catch Exception _))))
+
+(defn black-elo [game]
+  "The Elo of the black player (as an integer), or nil."
+  (when-let [elo (tag-value game "BlackElo")]
+    (try
+      (read-string elo)
+      (catch Exception _))))
 
 (defn remove-tag
   "Returns a new game equal to the input game, but with the given tag removed
@@ -663,7 +715,7 @@
 
 #?(:clj
    (defn games-in-file
-     "Returns a lazy sequence of all games in a ECN or PGN file. The optional
+     "Returns a lazy sequence of all games in an ECN or PGN file. The optional
      :format keyword parameter can take the values :ecn or :pgn, and is used
      to specify the file format. If this parameter is ommited, the function
      tries to guess the file type by inspecting the extension. If the extension
