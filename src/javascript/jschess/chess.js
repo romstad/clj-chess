@@ -2,6 +2,24 @@ goog.provide("jschess.chess")
 
 var chess = jschess.chess
 
+////////////////////////////////////
+// Random numbers, for Zobrist keys
+///////////////////////////////////
+
+var randInt = function () {
+    return Math.floor(Math.random() * 0xFFFFFFFF);
+}
+
+var randIntArray = function (size) {
+    return (function () {
+        var result = []
+        for (var i = 0; i < size; i++) {
+            result.push(randInt());
+        }
+        return result
+    }())
+}
+
 ///////////////////////////////////
 // Colors, piece types and pieces
 ///////////////////////////////////
@@ -324,6 +342,14 @@ chess.moveFromUCI = moveFromUCI
 // Boards
 //////////////////////////////////
 
+// Zobrist key arrays
+
+var zob = randIntArray(64 * (BK + 1))
+var zobEp = randIntArray(16)
+var zobCastle = randIntArray(16)
+var zobWTM = randInt()
+
+
 // Constructor. Creates an empty board.
 
 chess.Board = function () {
@@ -373,7 +399,7 @@ Board.fromFEN = function (fen) {
       }
    }
 
-   // Side to move 
+   // Side to move
    if (components.length > 1) {
       s = components[1]
       if (s[0] === "b") {
@@ -398,6 +424,9 @@ Board.fromFEN = function (fen) {
    }
 
    b.findCheckers()
+
+   // Zobrist key
+   b.key = b.computeKey()
 
    return b
 }
@@ -741,7 +770,7 @@ Board.prototype.isCheck = function () {
 
 Board.prototype.doMove = function (move) {
    var result = new Board()
-   
+
    result.parent = this
    result.sideToMove = oppositeColor(this.sideToMove)
    result.epSquare = SQUARE_NONE
@@ -832,8 +861,10 @@ Board.prototype.doMove = function (move) {
    if (squareFile(to) == FILE_MAX && squareRank(to) == RANK_MAX) {
       result.prohibitKingsideCastling(COLOR_BLACK)
    }
-   
+
    result.findCheckers()
+
+   result.key = result.computeKey()
 
    return result
 }
@@ -1476,9 +1507,22 @@ Board.prototype.isMaterialDraw = function () {
       this.pieceCount[BB] <= 1
 }
 
+Board.prototype.grandParent = function () {
+   return this.parent == null ? null : this.parent.parent
+}
+
+Board.prototype.isRepetitionDraw = function () {
+   var repetitionCount = 1
+   for (var b = this.grandParent; b != null; b = b.grandParent) {
+      if (b.key == this.key) {
+         repetitionCount++
+      }
+   }
+   return repetitionCount >= 3
+}
+
 Board.prototype.isDraw = function () {
-   // TODO: repetition draws!
-   return this.isRule50Draw() || this.isMaterialDraw() || this.isStalemate()
+   return this.isRule50Draw() || this.isMaterialDraw() || this.isStalemate() || isRepetitionDraw()
 }
 
 Board.prototype.isTerminal = function () {
@@ -1665,4 +1709,36 @@ Board.prototype.doSANMove = function (san) {
    } else {
       return this.doMove(move)
    }
+}
+
+
+Board.prototype.computeKey = function () {
+    var result = 0
+
+    // Board
+    for (var i = 0; i < 64; i++) {
+        var p = this.board[squareExpand(i)]
+        if (p != EMPTY) {
+            result ^= zob[p * 64 + i]
+        }
+    }
+
+    // Castle rights
+    this.castleRights[0] ? 1 : 0
+    cf |= this.castleRights[1] ? 2 : 0
+    cf |= this.castleRights[2] ? 4 : 0
+    cf |= this.castleRights[3] ? 8 : 0
+    result ^= zobCastle[cf]
+
+    // En passant
+    if (this.epSquare != SQUARE_NONE) {
+        result ^= zobEp(squareFile(this.epSquare))
+    }
+
+    // Side to move
+    if (this.sideToMove == COLOR_WHITE) {
+        result ^= zobWTM;
+    }
+
+    return result
 }
