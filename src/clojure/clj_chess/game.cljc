@@ -6,6 +6,7 @@
             #?(:clj [clojure.pprint :refer [cl-format]]
                :cljs [cljs.pprint :refer [cl-format]])
             [clj-chess.board :as board]
+            #?(:clj [clj-chess.ecn :as ecn])
             [clj-chess.pgn :as pgn])
   #?(:clj (:import org.apache.commons.lang3.text.WordUtils)))
 
@@ -659,3 +660,21 @@
   (from-ecn (pgn/parse-pgn pgn-string)
             :san true
             :include-annotations? include-annotations?))
+
+#?(:clj
+   (defn games-in-file
+     "Returns a lazy sequence of all games in a ECN or PGN file. The optional
+     :format keyword parameter can take the values :ecn or :pgn, and is used
+     to specify the file format. If this parameter is ommited, the function
+     tries to guess the file type by inspecting the extension. If the extension
+     is neither \".pgn\", \".PGN\", \".ecn\" nor \".ECN\", PGN format is
+     assumed."
+     [file-name & {:keys [format]}]
+     (let [format (or format
+                      (if (or (.endsWith file-name ".ecn")
+                              (.endsWith file-name ".ECN"))
+                        :ecn
+                        :pgn))]
+       (if (= format :pgn)
+         (map #(from-ecn % :san true) (pgn/games-in-file file-name))
+         (map #(from-ecn % :san false) (ecn/games-in-file file-name))))))
