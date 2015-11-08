@@ -155,7 +155,7 @@
 #?(:clj
    (defmethod process-movetext-token PGNToken$TokenType/LEFT_PAREN
      [tokens acc]
-     (let [[new-tokens variation] (read-movetext (rest tokens))]
+     (let [[new-tokens variation] (read-movetext (rest tokens) [:variation])]
        [(rest new-tokens) (conj acc variation)])))
 
 #?(:clj
@@ -194,7 +194,7 @@
 #?(:clj
    (defn read-game [tokens]
      (let [[tokens headers] (read-headers tokens)
-           [tokens movetext] (read-movetext tokens)]
+           [tokens movetext] (read-movetext tokens [:moves])]
        [tokens [:game headers movetext]])))
 
 #?(:clj

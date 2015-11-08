@@ -172,24 +172,29 @@
 
 
 (defn- zip-add-ecn-data
-  "Takes a game zipper and an ECN data object, and returns a zipper for a
-  modified game where the ECN data is added. The ECN data is either a string
-  representing a move in UCI notation (e.g. \"e2e4\") or a vector where the
-  first element is a keyword representing the data type (currently, :moves,
-  :variation, :comment, :pre-comment and :nag are the supported data types)
-  and the remaining elements are the contents."
-  [zipper data]
+  "Takes a move function (a function that takes a board and a string and
+  returns the move represented by the string, typically board/move-from-san
+  or board/move-from-uci), a game zipper and an ECN data object, and returns
+  a zipper for a modified game where the ECN data is added. The ECN data is
+  either a string representing a move in the notation compatible with the
+  move function (e.g. \"g1f3\" for board/move-from-uci or \"Nf3\" for
+  board/move-from-san) or a vector where the first element is a keyword
+  representing the data type (currently, :moves, :variation, :comment,
+  :pre-comment and :nag are the supported data types) and the remaining
+  elements are the contents."
+  [move-function zipper data]
   (cond
     (string? data)
     (-> zipper
-        (zip-add-move board/move-from-uci data false)
+        (zip-add-move move-function data false)
         (zip/down)
         (zip/rightmost))
 
     (vector? data)
     (let [[key & values] data
           zip-add-fragments (fn [zip fs]
-                              (reduce zip-add-ecn-data zip fs))
+                              (reduce (partial zip-add-ecn-data move-function)
+                                      zip fs))
           add-pre-comment (fn [zip pre]
                             (if-not pre
                               zip
@@ -629,26 +634,26 @@
        (tag-value game "Result")))
 
 (defn from-ecn
-  "Creates a game from ECN data."
-  [ecn & {:keys [include-annotations?] :or {include-annotations? true}}]
+  "Creates a game from ECN data, or from parsed PGN."
+  [ecn & {:keys [include-annotations? san]
+          :or {include-annotations? true san false}}]
   (let [game (reduce #(apply set-tag %1 %2)
                      (new-game)
                      (rest (second ecn)))]
     (if-not include-annotations?
-      (-> game (add-uci-move-sequence
+      (-> game ((if san
+                  add-san-move-sequence
+                  add-uci-move-sequence)
                  (filter string? (-> ecn (nth 2) rest))))
-      (let [z (zip-add-ecn-data (game-zip game) (nth ecn 2))]
+      (let [z (zip-add-ecn-data (if san
+                                  board/move-from-san
+                                  board/move-from-uci)
+                                (game-zip game) (nth ecn 2))]
         (to-beginning
           (assoc game :root-node (zip/root z)))))))
 
 (defn from-pgn
-  "Creates a game from a PGN string. Doesn't yet handle comments or
-  variations."
+  "Creates a game from a PGN string."
   [pgn-string]
-  (let [parsed-pgn (pgn/parse-pgn pgn-string)
-        game (reduce #(apply set-tag %1 %2)
-                     (new-game)
-                     (rest (second parsed-pgn)))]
-    (-> game (add-san-move-sequence
-               (filter string? (-> parsed-pgn (nth 2) rest))))))
-
+  (from-ecn (pgn/parse-pgn pgn-string)
+            :san true))
