@@ -654,6 +654,8 @@
 
 (defn from-pgn
   "Creates a game from a PGN string."
-  [pgn-string]
+  [pgn-string & {:keys [include-annotations?]
+                 :or {:include-annotations? true}}]
   (from-ecn (pgn/parse-pgn pgn-string)
-            :san true))
+            :san true
+            :include-annotations? include-annotations?))
