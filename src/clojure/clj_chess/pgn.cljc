@@ -2,12 +2,14 @@
   "PGN parser. It turns out that using instaparse for this wasn't the best
   idea, since it's painfully slow. This entire namespace needs to be rewritten
   before it is usable."
-  (:require [clojure.string :as str]
+  (:require [clojure.java.io :as io]
+            [clojure.string :as str]
             [instaparse.core :as ip]
             #?(:cljs [cljs.reader :refer [read-string]]))
   #?(:clj
      (:import chess.PGNReader
-              chess.PGNToken$TokenType)))
+              chess.PGNToken$TokenType
+              (java.io PushbackReader StringReader))))
 
 #?(:cljs
    (def pgn-parser
@@ -161,7 +163,9 @@
      (let [acc (or acc [:moves])]
        (if (or (empty? tokens)
                (= (.getTokenType (first tokens))
-                  PGNToken$TokenType/RIGHT_PAREN))
+                  PGNToken$TokenType/RIGHT_PAREN)
+               (= (.getTokenType (first tokens))
+                  PGNToken$TokenType/LEFT_BRACKET))
          [tokens acc]
          (let [[new-tokens new-acc]
                (process-movetext-token tokens acc)]
@@ -190,9 +194,23 @@
 #?(:clj
    (defn read-game [tokens]
      (let [[tokens headers] (read-headers tokens)
-           [_ movetext] (read-movetext tokens)]
-       [:game headers movetext])))
+           [tokens movetext] (read-movetext tokens)]
+       [tokens [:game headers movetext]])))
 
 #?(:clj
    (defn parse-pgn [pgn]
-     (read-game (pgn-token-seq (PGNReader. (java.io.PushbackReader. (java.io.StringReader. pgn)))))))
+     (second
+       (read-game (pgn-token-seq (PGNReader. (PushbackReader.
+                                               (StringReader. pgn))))))))
+
+#?(:clj
+   (defn game-seq [tokens]
+     (when-not (empty? tokens)
+       (let [[tokens game] (read-game tokens)]
+         (cons game (lazy-seq (game-seq tokens)))))))
+
+#?(:clj
+   (defn games-in-file [pgn-file]
+     (let [tokens (pgn-token-seq (PGNReader. (PushbackReader.
+                                               (io/reader pgn-file))))]
+       (game-seq tokens))))
