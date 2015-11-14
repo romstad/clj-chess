@@ -128,6 +128,15 @@
   #?(:clj (.getParent board)
      :cljs (.-parent board)))
 
+(defn forebears
+  "A sequence of all ancestors of the board, ordered from the root board, up
+  to and including the input board."
+  [board]
+  (conj (if-let [p (parent board)]
+          (forebears p)
+          [])
+        board))
+
 (defn last-move
   "The last move played to reach this board position, or nil if we are at
   the beginning of the game."

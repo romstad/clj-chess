@@ -573,7 +573,7 @@
 
 
 (defn main-line
-  "Returns a vector of all moves along the main line of the game, beginning
+  "Returns a vector of all nodes along the main line of the game, beginning
   with the root and selecting the oldest child until a leaf is reached."
   [game]
   (loop [node (:root-node game)
@@ -582,6 +582,28 @@
       (if-not child
         (conj result node)
         (recur child (conj result node))))))
+
+
+(defn boards
+  "A sequence of all the board positions along the main line of the game,
+  beginning at the root node."
+  [game]
+  (-> game to-end board board/forebears))
+
+
+(defn moves
+  "A sequence of all moves along the main line of the game, beginning at the
+  root."
+  [game]
+  (map board/last-move (rest (boards game))))
+
+
+(defn boards-with-moves
+  "A sequence of two element vectors, one for each board position along the
+  main line, beginning at the root node. Each two-element vector consists of
+  a board along with the move made from that board."
+  [game]
+  (map vector (boards game) (moves game)))
 
 
 (defn to-uci
@@ -690,20 +712,24 @@
   "Creates a game from ECN data, or from parsed PGN."
   [ecn & {:keys [include-annotations? san]
           :or {include-annotations? true san false}}]
-  (let [game (reduce #(apply set-tag %1 %2)
-                     (new-game)
-                     (rest (second ecn)))]
-    (if-not include-annotations?
-      (-> game ((if san
-                  add-san-move-sequence
-                  add-uci-move-sequence)
-                 (filter string? (-> ecn (nth 2) rest))))
-      (let [z (zip-add-ecn-data (if san
-                                  board/move-from-san
-                                  board/move-from-uci)
-                                (game-zip game) (nth ecn 2))]
-        (to-beginning
-          (assoc game :root-node (zip/root z)))))))
+  (try
+    (let [game (reduce #(apply set-tag %1 %2)
+                       (new-game)
+                       (rest (second ecn)))]
+      (if-not include-annotations?
+        (-> game ((if san
+                    add-san-move-sequence
+                    add-uci-move-sequence)
+                   (filter string? (-> ecn (nth 2) rest))))
+        (let [z (zip-add-ecn-data (if san
+                                    board/move-from-san
+                                    board/move-from-uci)
+                                  (game-zip game) (nth ecn 2))]
+          (to-beginning
+            (assoc game :root-node (zip/root z))))))
+    (catch Exception _
+      (println "Illegal or ambigious move in game:")
+      (prn ecn))))
 
 (defn from-pgn
   "Creates a game from a PGN string."
