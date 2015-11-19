@@ -688,6 +688,45 @@
                     (node-to-string (first children)))))))]
     (node-to-string (game :root-node))))
 
+(defn- ecn-move-text [game & {:keys [include-comments? include-variations?]
+                              :or {:include-comments? true
+                                   :include-variations? true}}]
+  (letfn [(node-to-ecn [node]
+            (let [board (:board node)
+                  children (:children node)]
+              (when-not (empty? children)
+                (filterv
+                  identity
+                  `[; Pre-comment for first child move
+                    ~(when include-comments?
+                       (when-let [c (:pre-comment (first children))]
+                         [:pre-comment c]))
+                    ; String representation of first child move (main variation):
+                    ~(-> (first children) :board board/last-move board/move-to-uci)
+                    ; Comment for first child move:
+                    ~(when include-comments?
+                       (when-let [c (:comment (first children))]
+                         [:comment c]))
+                    ; Recursive annotation variations for younger children:
+                    ~@(when include-variations?
+                        (mapv (fn [child]
+                                (let [m (-> child :board board/last-move)]
+                                  (filterv
+                                    identity
+                                    `[:variation
+                                      ~(when include-comments?
+                                         (when-let [c (:pre-comment child)]
+                                           [:pre-comment c]))
+                                      ~(board/move-to-uci m)
+                                      ~(when include-comments?
+                                         (when-let [c (:comment child)]
+                                           [:comment c]))
+                                      ~@(node-to-ecn child)])))
+                              (rest children)))
+                    ; Game continuation after first child move:
+                    ~@(node-to-ecn (first children))]))))]
+    `[:moves ~@(node-to-ecn (:root-node game))]))
+
 
 (defn- wrap [text column]
   #?(:clj (WordUtils/wrap text column)
@@ -707,6 +746,17 @@
              79)
        " "
        (tag-value game "Result")))
+
+(defn to-ecn
+  "Exports the game as ECN data, optionally including comments and
+  variations."
+  [game & {:keys [include-comments? include-variations?]
+           :or {include-comments? true include-variations? true}}]
+  `[:game
+    [:headers ~@(:tags game)]
+    ~(ecn-move-text game
+                    :include-comments? include-comments?
+                    :include-variations? include-variations?)])
 
 (defn from-ecn
   "Creates a game from ECN data, or from parsed PGN."
@@ -734,7 +784,7 @@
 (defn from-pgn
   "Creates a game from a PGN string."
   [pgn-string & {:keys [include-annotations?]
-                 :or {:include-annotations? true}}]
+                 :or {include-annotations? true}}]
   (from-ecn (pgn/parse-pgn pgn-string)
             :san true
             :include-annotations? include-annotations?))

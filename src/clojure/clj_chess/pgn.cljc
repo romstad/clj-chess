@@ -142,7 +142,9 @@
 #?(:clj
    (defmethod process-movetext-token PGNToken$TokenType/COMMENT
      [tokens acc]
-     [(rest tokens) (conj acc [:comment (.getValue (first tokens))])]))
+     [(rest tokens)
+      (conj acc [(if (#{:moves :variation} (last acc)) :pre-comment :comment)
+                 (.getValue (first tokens))])]))
 
 #?(:clj
    (defmethod process-movetext-token PGNToken$TokenType/NAG
