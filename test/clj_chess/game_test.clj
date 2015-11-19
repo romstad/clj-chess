@@ -590,3 +590,11 @@ Qg1+. Topalov resigned and this wonderful game was over.} 1-0")
            Ka4 28. Qc3 Qxd5 29. Ra7 Bb7 30. Rxb7 Qc4 31. Qxf6 Kxa3 32. Qxa6+ Kxb4 33. c3+
            Kxc3 34. Qa1+ Kd2 35. Qb2+ Kd1 36. Bf1 Rd2 37. Rd7 Rxd7 38. Bxc4 bxc4 39. Qxh8
            Rd3 40. Qa8 c3 41. Qa4+ Ke1 42. f4 f5 43. Kc1 Rd2 44. Qa7 1-0"))))
+
+(deftest ecn
+  (let [g0 (from-pgn pgn-string-0)
+        g1 (from-pgn pgn-string-1)
+        e0 (to-ecn g0)
+        e1 (to-ecn g1)]
+    (is (= e0 (-> e0 from-ecn to-ecn))
+        (= e1 (-> e1 from-ecn to-ecn)))))

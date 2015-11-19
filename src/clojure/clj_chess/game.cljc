@@ -105,7 +105,7 @@
   (if it exists)."
   [game tag-name]
   (assoc game :tags (remove #(= tag-name (first %))
-                            (game :tags))))
+                            (:tags game))))
 
 (defn set-tag
   "Returns a new game equal to the input game, but with the given tag set to
@@ -114,8 +114,8 @@
   [game name value]
   (if (tag-value game name)
     (assoc game :tags (map #(if (= name (first %)) [name value] %)
-                           (game :tags)))
-    (assoc game :tags (concat (game :tags) [[name value]]))))
+                           (:tags game)))
+    (assoc game :tags (concat (:tags game) [[name value]]))))
 
 (defn board
   "Returns the current board position of a game."
@@ -131,17 +131,17 @@
   "Finds the first (as found by a depth-first search) game tree node
   matching the given predicate. If no such node is found, returns nil."
   [game predicate & [start-node]]
-  (let [start-node (or start-node (game :root-node))]
+  (let [start-node (or start-node (:root-node game))]
     (if (predicate start-node)
       start-node
       (first (filter identity
                      (map #(find-node-matching game predicate %)
-                          (start-node :children)))))))
+                          (:children start-node)))))))
 
 (defn find-node
   "Returns the node with the given node id, or nil if no such node exists."
   [game node-id]
-  (find-node-matching game #(= node-id (% :node-id))))
+  (find-node-matching game #(= node-id (:node-id %))))
 
 (defn- game-zip
   "Creates a zipper for traversing a game. By default, the zipper
@@ -152,9 +152,9 @@
     (let [zip (zip/zipper (constantly true)
                           :children
                           #(assoc %1 :children (vec %2))
-                          (game :root-node))]
+                          (:root-node game))]
       (loop [z zip]
-        (if (= node-id ((zip/node z) :node-id))
+        (if (= node-id (:node-id (zip/node z)))
           z
           (recur (zip/next z))))))
   ([game] (game-zip game (-> game :root-node :node-id))))
@@ -484,14 +484,14 @@
   the node with the given node id. If no node with the supplied node id exists
   in the game, returns nil."
   [game node-id]
-  (goto-node-matching game #(= node-id (% :node-id))))
+  (goto-node-matching game #(= node-id (:node-id %))))
 
 
 (defn at-beginning?
   "Tests whether we are currently at the beginning of the game, i.e. that the
   current node equals the root node."
   [game]
-  (= (game :current-node) (game :root-node)))
+  (= (:current-node game) (:root-node game)))
 
 
 (defn at-end?
@@ -509,7 +509,7 @@
   [game]
   (if (at-beginning? game)
     game
-    (goto-node-matching game #(some #{(game :current-node)} (% :children)))))
+    (goto-node-matching game #(some #{(:current-node game)} (:children %)))))
 
 
 (defn step-forward
@@ -528,18 +528,18 @@
   current node. In other words, we step back until we reach a branch point
   where the current variation started, or to the root of the game."
   [game]
-  (loop [n (game :current-node)
+  (loop [n (:current-node game)
          g (step-back game)]
     (if (or (at-beginning? g)
             (not= n (-> g :current-node :children first)))
       g
-      (recur (g :current-node) (step-back g)))))
+      (recur (:current-node g) (step-back g)))))
 
 (defn to-beginning
   "Returns a game identical to the input game, except that current-node is
   set to the root node."
   [game]
-  (assoc game :current-node (game :root-node)))
+  (assoc game :current-node (:root-node game)))
 
 
 (defn to-end-of-variation
@@ -548,10 +548,10 @@
   its end, i.e. by following the sequence of first children from the
   current node until a leaf node is reached."
   [game]
-  (loop [n (game :current-node)]
-    (if (empty? (n :children))
+  (loop [n (:current-node game)]
+    (if (empty? (:children n))
       (assoc game :current-node n)
-      (recur (first (n :children))))))
+      (recur (first (:children n))))))
 
 
 (defn to-end
@@ -618,7 +618,7 @@
   inspecting and debugging the tree structure."
   [game]
   (letfn [(tree [node]
-            (let [children (node :children)
+            (let [children (:children node)
                   move (-> node :board board/last-move board/move-to-uci)]
               (if-not children
                 [move]
@@ -638,18 +638,18 @@
   [game & {:keys [include-comments? include-variations?]
            :or {include-comments? true include-variations? true}}]
   (letfn [(terminal? [node]
-            (and (empty? (node :children))
+            (and (empty? (:children node))
                  (or (not include-comments?)
-                     (not (node :comment)))))
+                     (not (:comment node)))))
           (node-to-string [node]
-            (let [board (node :board)
-                  children (node :children)]
+            (let [board (:board node)
+                  children (:children node)]
               (str 
                 (when-not (empty? children)
                   (str 
                     ;; Pre-comment for first child move:
                     (when include-comments?
-                      (when-let [c ((first children) :pre-comment)]
+                      (when-let [c (:pre-comment (first children))]
                         (str "{" c "} ")))
                     ;; SAN of first child move (main variation):
                     (let [m (-> (first children) :board board/last-move)
@@ -664,7 +664,7 @@
                              " ")))
                     ;; Comment for first child move:
                     (when include-comments?
-                      (when-let [c ((first children) :comment)]
+                      (when-let [c (:comment (first children))]
                         (str "{" c "} ")))
                     ;; Recursive annotation variations for younger children:
                     (when include-variations?
@@ -672,21 +672,21 @@
                              (map #(let [m (-> % :board board/last-move)]
                                      (str "("
                                           (when include-comments?
-                                            (when-let [c (% :pre-comment)]
+                                            (when-let [c (:pre-comment %)]
                                               (str "{" c "} ")))
                                           (board/move-to-san 
                                             board m :include-move-number? true) 
                                           (when-not (terminal? %)
                                             " ")
                                           (when include-comments?
-                                            (when-let [c (% :comment)]
+                                            (when-let [c (:comment %)]
                                               (str "{" c "} ")))
                                           (node-to-string %)
                                           ") "))
                                   (rest children))))
                     ;; Game continuation after first child move:
                     (node-to-string (first children)))))))]
-    (node-to-string (game :root-node))))
+    (node-to-string (:root-node game))))
 
 (defn- ecn-move-text [game & {:keys [include-comments? include-variations?]
                               :or {:include-comments? true
@@ -738,7 +738,7 @@
   [game & {:keys [include-comments? include-variations?]
            :or {include-comments? true include-variations? true}}]
   (str (apply str (map #(cl-format nil "[~a ~s]\n" (first %) (second %))
-                       (game :tags)))
+                       (:tags game)))
        "\n"
        (wrap (move-text game
                         :include-comments? include-comments?
