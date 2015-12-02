@@ -62,7 +62,7 @@
     #?(:cljs d)
     #?(:clj
        (try
-         (time-format/parse (time-format/formatter "YYYY.MM.DD") d)
+         (time-format/parse (time-format/formatter "YYYY.MM.dd") d)
          (catch Exception _)))))
 
 (defn round [game]
