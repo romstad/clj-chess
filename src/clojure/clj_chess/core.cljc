@@ -2,7 +2,12 @@
   (:require [clj-chess.board :as b]
             [clj-chess.game :as g]
             #?(:cljs [jschess.chess :as jsc]))
-  #?(:clj (:import (chess Square))))
+  #?(:clj (:import (chess Square Piece))))
+
+(def ^:private color-to-keyword
+  "Converts the internal integer representation of piece colors to one of
+  the keywords :white, :black or :empty."
+  [:white :black :empty])
 
 (def ^:private piece-type-to-keyword
   "Converts the internal integer representation of piece types to keywords of
@@ -13,6 +18,20 @@
   "Converts the internal integer representation of chess pieces to keywords
   of the form :wp :wn, etc."
   [:? :wp :wn :wb :wr :wq :wk :? :? :bp :bn :bb :br :bq :bk :? :empty])
+
+(defn piece-type
+  "The type of a piece, given by a keyword of the form :pawn, :knight, etc."
+  [piece]
+  (piece-type-to-keyword
+    #?(:clj (Piece/type piece)
+       :cljs (jsc/pieceType piece))))
+
+(defn piece-color
+  "The color of a piece, :white or :black."
+  [piece]
+  (let [color #?(:clj (Piece/color piece)
+                 :cljs (jsc/pieceColor piece))]
+    (color-to-keyword color)))
 
 (defn move-from
   "The source square of a move"
