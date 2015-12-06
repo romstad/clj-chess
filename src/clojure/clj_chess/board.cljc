@@ -105,7 +105,7 @@
   (.canCastleKingside board (if (= side :white) 0 1)))
 
 (defn can-castle-queenside?
-  "Tests whether the given side still has the right to castle kingside."
+  "Tests whether the given side still has the right to castle queenside."
   [board side]
   (.canCastleQueenside board (if (= side :white) 0 1)))
 
