@@ -1,7 +1,8 @@
 (ns clj-chess.core
   (:require [clj-chess.board :as b]
             [clj-chess.game :as g]
-            #?(:cljs [jschess.chess :as jsc]))
+    #?(:cljs [jschess.chess :as jsc])
+            [clj-chess.board :as board])
   #?(:clj (:import (chess Square Piece))))
 
 (def ^:private color-to-keyword
@@ -134,6 +135,63 @@
 (defmethod piece-on Integer
   [board square]
   (piece-to-keyword (b/piece-on board square)))
+
+(defmulti ^{:doc "The piece type on a given square"} piece-type-on
+          (fn [_ square] (class square)))
+
+(defmethod piece-type-on Long
+  [board square]
+  (piece-type-to-keyword
+    #?(:clj (Piece/type (board/piece-on board square))
+       :cljs (jsc/pieceType (board/piece-on board square)))))
+
+(defmethod piece-type-on Integer
+  [board square]
+  (piece-type-to-keyword
+    #?(:clj (Piece/type (board/piece-on board square))
+       :cljs (jsc/pieceType (board/piece-on board square)))))
+
+(defmethod piece-type-on String
+  [board square]
+  (piece-type-on board (square-from-string square)))
+
+(defmulti ^{:doc "The piece type on a given square"} piece-type-on
+          (fn [_ square] (class square)))
+
+(defmethod piece-type-on Long
+  [board square]
+  (piece-type-to-keyword
+    #?(:clj (Piece/type (board/piece-on board square))
+       :cljs (jsc/pieceType (board/piece-on board square)))))
+
+(defmethod piece-type-on Integer
+  [board square]
+  (piece-type-to-keyword
+    #?(:clj (Piece/type (board/piece-on board square))
+       :cljs (jsc/pieceType (board/piece-on board square)))))
+
+(defmethod piece-type-on String
+  [board square]
+  (piece-type-on board (square-from-string square)))
+
+(defmulti ^{:doc "The color of the piece on a given square"} piece-color-on
+          (fn [_ square] (class square)))
+
+(defmethod piece-color-on Long
+  [board square]
+  (color-to-keyword
+    #?(:clj (Piece/color (board/piece-on board square))
+       :cljs (jsc/pieceColor (board/piece-on board square)))))
+
+(defmethod piece-color-on Integer
+  [board square]
+  (color-to-keyword
+    #?(:clj (Piece/color (board/piece-on board square))
+       :cljs (jsc/pieceColor (board/piece-on board square)))))
+
+(defmethod piece-color-on String
+  [board square]
+  (piece-color-on board (square-from-string square)))
 
 (defn can-castle-kingside?
   "Tests whether the given side still has the right to castle kingside."
