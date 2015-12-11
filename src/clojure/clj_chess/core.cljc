@@ -131,6 +131,10 @@
   [board square]
   (piece-to-keyword (b/piece-on board square)))
 
+(defmethod piece-on Integer
+  [board square]
+  (piece-to-keyword (b/piece-on board square)))
+
 (defn can-castle-kingside?
   "Tests whether the given side still has the right to castle kingside."
   [board side]
