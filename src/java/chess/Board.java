@@ -1459,6 +1459,15 @@ public final class Board {
         return state.piecesOfColorAndType(color, type);
     }
 
+    /// Number of pieces
+    public int pieceCount(int piece) {
+        return SquareSet.count(piecesOfColorAndType(Piece.color(piece), Piece.type(piece)));
+    }
+
+    public int pieceCount(int color, int type) {
+        return SquareSet.count(piecesOfColorAndType(color, type));
+    }
+
     /// The set of squares containing pawns of either color.
     public long pawns() {
         return state.pawns();

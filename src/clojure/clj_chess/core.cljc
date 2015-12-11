@@ -3,7 +3,7 @@
             [clj-chess.game :as g]
     #?(:cljs [jschess.chess :as jsc])
             [clj-chess.board :as board])
-  #?(:clj (:import (chess Square Piece))))
+  #?(:clj (:import (chess Square Piece SquareSet))))
 
 (def ^:private color-to-keyword
   "Converts the internal integer representation of piece colors to one of
@@ -19,6 +19,36 @@
   "Converts the internal integer representation of chess pieces to keywords
   of the form :wp :wn, etc."
   [:? :wp :wn :wb :wr :wq :wk :? :? :bp :bn :bb :br :bq :bk :? :empty])
+
+(def ^:private piece-type-from-keyword
+  "Converts a keyword of the form :pawn, :knight, etc. to the internal integer
+  representation of the corresponding piece type."
+  {:pawn 1 :knight 2 :bishop 3 :rook 4 :queen 5 :king 6})
+
+(defn ^:private color-from-keyword
+  "Converts a color keyword :white or :black to the corresponding interal
+  integer representation of the color."
+  [color]
+  (case color
+    :white 0
+    :black 1
+    2))
+
+(defn piece-make
+  "Converts a color keyword and a piece type keyword to the internal iteger
+  representation of a chess piece of the corresponding color and type."
+  [color type]
+  #?(:clj (Piece/make (color-from-keyword color)
+                      (piece-type-from-keyword type))
+     :cljs (jsc/pieceMake (color-from-keyword color)
+                          (piece-type-from-keyword type))))
+
+(def ^:private piece-from-keyword
+  "Converts a keyword of the form :wp, :wn etc. to the internal integer
+  representation of the corresponding piece."
+  {:wp 1 :wn 2 :wb 3 :wr 4 :wq 5 :wk 6
+   :bp 9 :bn 10 :bb 11 :br 12 :bq 13 :bk 14
+   :empty 16})
 
 (defn piece-type
   "The type of a piece, given by a keyword of the form :pawn, :knight, etc."
@@ -207,6 +237,17 @@
   "Castle rights, a subset of #{:white-oo, :white-ooo, :black-oo, :black-ooo}"
   [board]
   (b/castle-rights board))
+
+#?(:clj
+   (defn piece-count
+     "The number of pieces of the given type. You can either supply three
+     arguments representing board, piece color and piece type
+     (e.g (piece-count board :black :rook)) or two arguments representing
+     board and piece with color (e.g. (piece-count board :wb))."
+     ([board piece]
+      (board/piece-count board (piece-from-keyword piece)))
+     ([board piece color]
+      (board/piece-count board (piece-make piece color)))))
 
 (defn parent
   "The parent board of the current board (i.e. the board as it was before the

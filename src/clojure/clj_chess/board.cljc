@@ -121,6 +121,14 @@
                 :when (can-castle-queenside? board c)]
             k))))
 
+#?(:clj
+   (defn piece-count
+     "The number of pieces of a given type. There is a two-argument version taking
+     a board and a piece as input, and a three-argument version taking a board,
+     a color and a piece type."
+     ([board piece] (.pieceCount board piece))
+     ([board type color] (.pieceCount board type color))))
+
 (defn parent
   "The parent board of the current board (i.e. the board as it was before the
   last move was played), or nil if we're at the beginning of the game."
