@@ -709,8 +709,8 @@
 (defn game-to-ecn
   "Exports the game as ECN data, optionally including comments and
   variations."
-  [game]
-  (g/to-ecn game))
+  [game & rest]
+  (apply g/to-ecn game rest))
 
 (defn game-from-ecn
   "Creates a game from ECN data."
