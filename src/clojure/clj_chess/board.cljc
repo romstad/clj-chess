@@ -66,6 +66,12 @@
   [board]
   (.toFEN board))
 
+(defn check?
+  "Tests whether the side to move is in check."
+  [board]
+  #?(:clj (.isCheck board)
+     :cljs (.-isCheck board)))
+
 (defn terminal?
   "Tests whether the board position is terminal, i.e. checkmate or an
   immediate draw."
@@ -184,6 +190,23 @@
   (+ 1 (quot #?(:clj (.getGamePly board)
                 :cljs (.-gamePly board))
              2)))
+
+(defn move-to-byte
+  "Converts a move to a byte by sorting all moves alphabetically in UCI
+  notation and finding the index of the move in the list."
+  [board move]
+  (let [uci-move (move-to-uci move)]
+    (first (keep-indexed (fn [i m]
+                           (when (= uci-move m)
+                             i))
+                         (sort (map move-to-uci (moves board)))))))
+
+(defn move-from-byte
+  "Converts a move in byte format, i.e. an integer representing the index
+  of the move among the legal moves sorted alphabetically in UCI notation,
+  to an actual move."
+  [board byte-move]
+  (nth (sort-by move-to-uci (moves board)) byte-move))
  
 (defn move-to-san
   "Translates a move to a string in short algebraic notation, optionally

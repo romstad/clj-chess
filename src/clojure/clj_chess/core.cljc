@@ -113,6 +113,11 @@
   [board]
   (b/to-fen board))
 
+(defn check?
+  "Tests whether the side to move is in check."
+  [board]
+  (b/check? board))
+
 (defn terminal?
   "Tests whether the board position is terminal, i.e. checkmate or an
   immediate draw."

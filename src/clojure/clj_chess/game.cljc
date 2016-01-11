@@ -196,7 +196,7 @@
 
 (def ^:private zip-add-san-move #(zip-add-move %1 board/move-from-san %2 false))
 (def ^:private zip-add-uci-move #(zip-add-move %1 board/move-from-uci %2 false))
-(def ^:private zip-add-plain-move #(zip-add-move %2 (fn [_ m] m) %2 false))
+(def ^:private zip-add-plain-move #(zip-add-move %1 (fn [_ m] m) %2 false))
 
 (defn- zip-add-move-sequence
   "Takes a zipper, a move function (a function that, given a board and some
@@ -217,7 +217,10 @@
   #(zip-add-move-sequence %1 board/move-from-san %2 false))
 
 (def ^:private zip-add-uci-move-sequence
-  #(zip-add-move-sequence %2 board/move-from-uci %2 false))
+  #(zip-add-move-sequence %1 board/move-from-uci %2 false))
+
+(def ^:private zip-add-byte-move-sequence
+  #(zip-add-move-sequence %1 board/move-from-byte %2 false))
 
 (defn- zip-add-key-value-pair
   [zipper key value]
@@ -343,6 +346,17 @@
             remove-existing-moves?))
 
 
+(defn add-byte-move
+  "Adds a move in byte notation to the game at the given node id. The move is
+  added as the last child. If no node id is supplied, the current node of the
+  game is used. If remove-existing-moves? is true, any previously existing
+  moves at the point of insertion are removed."
+  [game byte-move & {:keys [node-id remove-existing-moves?]
+                     :or {:node-id (current-node-id game)}}]
+  (add-move game board/move-from-byte byte-move
+            node-id remove-existing-moves?))
+
+
 (defn add-map-move
   "Adds a map move (see documentation for clj-chess.board/board-to-map) to a
   game at a given node id. The move is added as the last child. If no node id
@@ -390,6 +404,20 @@
   [game uci-moves & {:keys [node-id remove-existing-moves?]
                      :or {node-id (current-node-id game)}}]
   (add-move-sequence game board/move-from-uci uci-moves
+                     node-id
+                     remove-existing-moves?))
+
+
+(defn add-byte-move-sequence
+  "Like add-byte-move, but adds a sequence of moves rather than a single move.
+  This is faster than calling add-byte-move multiple times, because we don't
+  have to unzip and zip the tree for each added move. If
+  remove-existing-moves? is true, any previously existing moves at the point
+  of insertion are removed."
+  [game byte-moves & {:keys [node-id remove-existing-moves?]
+                      :or {node-id (current-node-id game)}}]
+  (prn byte-moves)
+  (add-move-sequence game board/move-from-byte byte-moves
                      node-id
                      remove-existing-moves?))
 
@@ -688,44 +716,49 @@
                     (node-to-string (first children)))))))]
     (node-to-string (:root-node game))))
 
-(defn- ecn-move-text [game & {:keys [include-comments? include-variations?]
+(defn- ecn-move-text [game & {:keys [include-comments? include-variations?
+                                     binary?]
                               :or {:include-comments? true
                                    :include-variations? true}}]
-  (letfn [(node-to-ecn [node]
-            (let [board (:board node)
-                  children (:children node)]
-              (when-not (empty? children)
-                (filterv
-                  identity
-                  `[; Pre-comment for first child move
-                    ~(when include-comments?
-                       (when-let [c (:pre-comment (first children))]
-                         [:pre-comment c]))
-                    ; String representation of first child move (main variation):
-                    ~(-> (first children) :board board/last-move board/move-to-uci)
-                    ; Comment for first child move:
-                    ~(when include-comments?
-                       (when-let [c (:comment (first children))]
-                         [:comment c]))
-                    ; Recursive annotation variations for younger children:
-                    ~@(when include-variations?
-                        (mapv (fn [child]
-                                (let [m (-> child :board board/last-move)]
-                                  (filterv
-                                    identity
-                                    `[:variation
-                                      ~(when include-comments?
-                                         (when-let [c (:pre-comment child)]
-                                           [:pre-comment c]))
-                                      ~(board/move-to-uci m)
-                                      ~(when include-comments?
-                                         (when-let [c (:comment child)]
-                                           [:comment c]))
-                                      ~@(node-to-ecn child)])))
-                              (rest children)))
-                    ; Game continuation after first child move:
-                    ~@(node-to-ecn (first children))]))))]
-    `[:moves ~@(node-to-ecn (:root-node game))]))
+  (if binary?
+    [:byte-moves (byte-array (map (fn [[b m]] (board/move-to-byte b m))
+                                  (boards-with-moves game)))]
+    (letfn [(node-to-ecn [node]
+              (let [board (:board node)
+                    children (:children node)]
+                (when-not (empty? children)
+                  (filterv
+                    identity
+                    `[; Pre-comment for first child move
+                      ~(when include-comments?
+                         (when-let [c (:pre-comment (first children))]
+                           [:pre-comment c]))
+                      ; String representation of first child move (main variation):
+                      ~(-> (first children) :board board/last-move
+                           board/move-to-uci)
+                      ; Comment for first child move:
+                      ~(when include-comments?
+                         (when-let [c (:comment (first children))]
+                           [:comment c]))
+                      ; Recursive annotation variations for younger children:
+                      ~@(when include-variations?
+                          (mapv (fn [child]
+                                  (let [m (-> child :board board/last-move)]
+                                    (filterv
+                                      identity
+                                      `[:variation
+                                        ~(when include-comments?
+                                           (when-let [c (:pre-comment child)]
+                                             [:pre-comment c]))
+                                        ~(board/move-to-uci m)
+                                        ~(when include-comments?
+                                           (when-let [c (:comment child)]
+                                             [:comment c]))
+                                        ~@(node-to-ecn child)])))
+                                (rest children)))
+                      ; Game continuation after first child move:
+                      ~@(node-to-ecn (first children))]))))]
+      `[:moves ~@(node-to-ecn (:root-node game))])))
 
 
 (defn- wrap [text column]
@@ -750,13 +783,14 @@
 (defn to-ecn
   "Exports the game as ECN data, optionally including comments and
   variations."
-  [game & {:keys [include-comments? include-variations?]
+  [game & {:keys [include-comments? include-variations? binary?]
            :or {include-comments? true include-variations? true}}]
   `[:game
     [:headers ~@(:tags game)]
     ~(ecn-move-text game
                     :include-comments? include-comments?
-                    :include-variations? include-variations?)])
+                    :include-variations? include-variations?
+                    :binary? binary?)])
 
 (defn from-ecn
   "Creates a game from ECN data, or from parsed PGN."
@@ -766,17 +800,19 @@
     (let [game (reduce #(apply set-tag %1 %2)
                        (new-game)
                        (rest (second ecn)))]
-      (if-not include-annotations?
-        (-> game ((if san
-                    add-san-move-sequence
-                    add-uci-move-sequence)
-                   (filter string? (-> ecn (nth 2) rest))))
-        (let [z (zip-add-ecn-data (if san
-                                    board/move-from-san
-                                    board/move-from-uci)
-                                  (game-zip game) (nth ecn 2))]
-          (to-beginning
-            (assoc game :root-node (zip/root z))))))
+      (case (first (nth ecn 2))
+        :byte-moves (add-byte-move-sequence game (vec (second (nth ecn 2))))
+        :moves (if-not include-annotations?
+                 (-> game ((if san
+                             add-san-move-sequence
+                             add-uci-move-sequence)
+                            (filter string? (-> ecn (nth 2) rest))))
+                 (let [z (zip-add-ecn-data (if san
+                                             board/move-from-san
+                                             board/move-from-uci)
+                                           (game-zip game) (nth ecn 2))]
+                   (to-beginning
+                     (assoc game :root-node (zip/root z)))))))
     (catch Exception _
       (println "Illegal or ambigious move in game:")
       (prn ecn))))
