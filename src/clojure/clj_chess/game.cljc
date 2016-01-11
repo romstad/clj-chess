@@ -416,7 +416,6 @@
   of insertion are removed."
   [game byte-moves & {:keys [node-id remove-existing-moves?]
                       :or {node-id (current-node-id game)}}]
-  (prn byte-moves)
   (add-move-sequence game board/move-from-byte byte-moves
                      node-id
                      remove-existing-moves?))
