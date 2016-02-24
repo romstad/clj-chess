@@ -1,4 +1,5 @@
 (ns clj-chess.core
+  (:refer-clojure :exclude [ancestors])
   (:require [clj-chess.board :as b]
             [clj-chess.game :as g]
     #?(:cljs [jschess.chess :as jsc])
@@ -156,77 +157,98 @@
   #?(:clj (Square/toString square)
      :cljs (jsc/squareToString square)))
 
-(defmulti ^{:doc "The piece on a given square"} piece-on
-          (fn [_ square] (class square)))
+(defmulti ^{:doc "The piece on a given square."} piece-on
+          (fn [_ square]
+            #?(:clj (class square)
+               :cljs (type square))))
 
-(defmethod piece-on String
-  [board square]
-  (piece-to-keyword (b/piece-on board (square-from-string square))))
+#?(:clj
+   (defmethod piece-on String
+     [board square]
+     (piece-to-keyword (b/piece-on board (square-from-string square)))))
 
-(defmethod piece-on Long
-  [board square]
-  (piece-to-keyword (b/piece-on board square)))
+#?(:clj
+   (defmethod piece-on Long
+     [board square]
+     (piece-to-keyword (b/piece-on board square))))
 
-(defmethod piece-on Integer
-  [board square]
-  (piece-to-keyword (b/piece-on board square)))
+#?(:clj
+   (defmethod piece-on Integer
+     [board square]
+     (piece-to-keyword (b/piece-on board square))))
 
-(defmulti ^{:doc "The piece type on a given square"} piece-type-on
-          (fn [_ square] (class square)))
+#?(:cljs
+   (defmethod piece-on js/String
+     [board square]
+     (piece-to-keyword (b/piece-on board (square-from-string square)))))
 
-(defmethod piece-type-on Long
-  [board square]
-  (piece-type-to-keyword
-    #?(:clj (Piece/type (board/piece-on board square))
-       :cljs (jsc/pieceType (board/piece-on board square)))))
-
-(defmethod piece-type-on Integer
-  [board square]
-  (piece-type-to-keyword
-    #?(:clj (Piece/type (board/piece-on board square))
-       :cljs (jsc/pieceType (board/piece-on board square)))))
-
-(defmethod piece-type-on String
-  [board square]
-  (piece-type-on board (square-from-string square)))
+#?(:cljs
+   (defmethod piece-on js/Number
+     [board square]
+     (piece-to-keyword (b/piece-on board square))))
 
 (defmulti ^{:doc "The piece type on a given square"} piece-type-on
-          (fn [_ square] (class square)))
+          (fn [_ square]
+            #?(:clj (class square)
+               :cljs (type square))))
 
-(defmethod piece-type-on Long
-  [board square]
-  (piece-type-to-keyword
-    #?(:clj (Piece/type (board/piece-on board square))
-       :cljs (jsc/pieceType (board/piece-on board square)))))
+#?(:clj
+   (defmethod piece-type-on Long
+     [board square]
+     (piece-type-to-keyword
+       (Piece/type (board/piece-on board square)))))
 
-(defmethod piece-type-on Integer
-  [board square]
-  (piece-type-to-keyword
-    #?(:clj (Piece/type (board/piece-on board square))
-       :cljs (jsc/pieceType (board/piece-on board square)))))
+#?(:clj
+   (defmethod piece-type-on Integer
+     [board square]
+     (piece-type-to-keyword
+       (Piece/type (board/piece-on board square)))))
 
-(defmethod piece-type-on String
-  [board square]
-  (piece-type-on board (square-from-string square)))
+#?(:clj
+   (defmethod piece-type-on String
+     [board square]
+     (piece-type-on board (square-from-string square))))
 
-(defmulti ^{:doc "The color of the piece on a given square"} piece-color-on
-          (fn [_ square] (class square)))
+#?(:cljs
+   (defmethod piece-type-on js/Number
+     [board square]
+     (piece-type-to-keyword
+       (jsc/pieceType (board/piece-on board square)))))
 
-(defmethod piece-color-on Long
-  [board square]
-  (color-to-keyword
-    #?(:clj (Piece/color (board/piece-on board square))
-       :cljs (jsc/pieceColor (board/piece-on board square)))))
+#?(:cljs
+   (defmethod piece-type-on js/String
+     [board square]
+     (piece-type-on board (square-from-string square))))
 
-(defmethod piece-color-on Integer
-  [board square]
-  (color-to-keyword
-    #?(:clj (Piece/color (board/piece-on board square))
-       :cljs (jsc/pieceColor (board/piece-on board square)))))
+(defmulti ^{:doc "The color of the piece on a given square."} piece-color-on
+          (fn [_ square]
+            #?(:clj (class square)
+               :cljs (type square))))
 
-(defmethod piece-color-on String
-  [board square]
-  (piece-color-on board (square-from-string square)))
+#?(:clj
+   (defmethod piece-color-on Long
+     [board square]
+     (color-to-keyword (Piece/color (board/piece-on board square)))))
+
+#?(:clj
+   (defmethod piece-color-on Integer
+     [board square]
+     (color-to-keyword (Piece/color (board/piece-on board square)))))
+
+#?(:clj
+   (defmethod piece-color-on String
+     [board square]
+     (piece-color-on board (square-from-string square))))
+
+#?(:cljs
+   (defmethod piece-color-on js/Number
+     [board square]
+     (color-to-keyword (jsc/pieceColor (board/piece-on board square)))))
+
+#?(:cljs
+   (defmethod piece-color-on js/String
+     [board square]
+     (piece-color-on board (square-from-string square))))
 
 (defn can-castle-kingside?
   "Tests whether the given side still has the right to castle kingside."
@@ -260,11 +282,11 @@
   [board]
   (b/parent board))
 
-(defn forebears
+(defn ancestors
   "A sequence of all ancestors of the board, ordered by the root board, up to
   and including the input board."
   [board]
-  (b/forebears board))
+  (b/ancestors board))
 
 (defn last-move
   "The last move played to reach this board position, or nil if we're at the
@@ -278,7 +300,7 @@
   [board]
   (b/checking-pieces board))
 
-(defn moves
+(defn legal-moves
   "Returns a vector of all legal moves for the given board."
   [board]
   (b/moves board))

@@ -1,4 +1,5 @@
 (ns clj-chess.board
+  (:refer-clojure :exclude [ancestors])
   #?(:cljs (:require [jschess.chess :as jsc])
      :clj (:import (chess Board Move PieceColor Piece Square))))
 
@@ -142,12 +143,12 @@
   #?(:clj (.getParent board)
      :cljs (.-parent board)))
 
-(defn forebears
+(defn ancestors
   "A sequence of all ancestors of the board, ordered from the root board, up
   to and including the input board."
   [board]
   (conj (if-let [p (parent board)]
-          (forebears p)
+          (ancestors p)
           [])
         board))
 

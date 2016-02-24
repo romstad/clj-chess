@@ -1644,7 +1644,7 @@ Board.prototype.moveFromSAN = function (str) {
    // Moving piece 
    if (left < right) {
       pt = pieceFromString(s[left]) //"NBRKQ".indexOf(s.substring(left, left + 1))
-      if (pt != -1) {
+      if (pt != -1 && pt < 8) {
          left++
       } else {
          pt = PAWN

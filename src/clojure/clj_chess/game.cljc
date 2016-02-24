@@ -9,6 +9,7 @@
             #?(:clj [clj-time.format :as time-format])
             [clj-chess.board :as board]
             #?(:clj [clj-chess.ecn :as ecn])
+            #?(:cljs [cljs.reader :refer [read-string]])
             [clj-chess.pgn :as pgn])
   #?(:clj (:import org.apache.commons.lang3.text.WordUtils)))
 
@@ -91,14 +92,16 @@
   (when-let [elo (tag-value game "WhiteElo")]
     (try
       (read-string elo)
-      (catch Exception _))))
+      #?(:clj (catch Exception _)
+         :cljs (catch js/Error _)))))
 
 (defn black-elo [game]
   "The Elo of the black player (as an integer), or nil."
   (when-let [elo (tag-value game "BlackElo")]
     (try
       (read-string elo)
-      (catch Exception _))))
+      #?(:clj (catch Exception _)
+         :cljs (catch js/Error _)))))
 
 (defn remove-tag
   "Returns a new game equal to the input game, but with the given tag removed
@@ -615,7 +618,7 @@
   "A sequence of all the board positions along the main line of the game,
   beginning at the root node."
   [game]
-  (-> game to-end board board/forebears))
+  (-> game to-end board board/ancestors))
 
 
 (defn moves
@@ -720,8 +723,11 @@
                               :or {:include-comments? true
                                    :include-variations? true}}]
   (if binary?
-    [:byte-moves (byte-array (map (fn [[b m]] (board/move-to-byte b m))
-                                  (boards-with-moves game)))]
+    [:byte-moves #?(:clj (byte-array (map (fn [[b m]] (board/move-to-byte b m))
+                                          (boards-with-moves game)))
+                    :cljs (throw
+                            (js/Error
+                              "Binary move encoding is not supported in cljs")))]
     (letfn [(node-to-ecn [node]
               (let [board (:board node)
                     children (:children node)]
@@ -812,8 +818,8 @@
                                            (game-zip game) (nth ecn 2))]
                    (to-beginning
                      (assoc game :root-node (zip/root z)))))))
-    (catch Exception _
-      (println "Illegal or ambigious move in game:")
+    (catch #?(:clj Exception :cljs js/Error) _
+      (println "Illegal or ambiguous move in game:")
       (prn ecn))))
 
 (defn from-pgn
