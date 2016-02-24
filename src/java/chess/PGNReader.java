@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.PushbackReader;
 
 public class PGNReader {
-    
+
     PushbackReader pbReader;
 
     public PGNReader(PushbackReader pr) {
@@ -25,7 +25,7 @@ public class PGNReader {
         return result;
     }
 
-    public void skipWhitespace() throws  IOException {
+    public void skipWhitespace() throws IOException {
         int c;
         for (c = pbReader.read(); Character.isWhitespace(c); c = pbReader.read()) { }
         pbReader.unread(c);
@@ -198,7 +198,7 @@ public class PGNReader {
         } else if ((char)c == '{') {
             return readComment();
         } else if ((char)c == ';') {
-            return readComment();
+            return readLineComment();
         } else if ((char)c == '$') {
             return readNAG();
         } else {
