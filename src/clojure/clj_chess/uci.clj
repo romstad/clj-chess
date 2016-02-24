@@ -6,8 +6,6 @@
 
 (alter-var-root #'*out* (constantly *out*))
 
-(def sf-path "/Users/tord/Documents/Programs/C/Stockfish/dev/Stockfish/src/stockfish")
-
 (defn- option-as-map [& option-components]
   (let [map (into {} option-components)]
     [:option
