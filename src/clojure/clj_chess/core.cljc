@@ -2,8 +2,7 @@
   (:refer-clojure :exclude [ancestors])
   (:require [clj-chess.board :as b]
             [clj-chess.game :as g]
-    #?(:cljs [jschess.chess :as jsc])
-            [clj-chess.board :as board])
+    #?(:cljs [jschess.chess :as jsc]))
   #?(:clj (:import (chess Square Piece SquareSet))))
 
 (def ^:private color-to-keyword
@@ -196,13 +195,13 @@
    (defmethod piece-type-on Long
      [board square]
      (piece-type-to-keyword
-       (Piece/type (board/piece-on board square)))))
+       (Piece/type (b/piece-on board square)))))
 
 #?(:clj
    (defmethod piece-type-on Integer
      [board square]
      (piece-type-to-keyword
-       (Piece/type (board/piece-on board square)))))
+       (Piece/type (b/piece-on board square)))))
 
 #?(:clj
    (defmethod piece-type-on String
@@ -213,7 +212,7 @@
    (defmethod piece-type-on js/Number
      [board square]
      (piece-type-to-keyword
-       (jsc/pieceType (board/piece-on board square)))))
+       (jsc/pieceType (b/piece-on board square)))))
 
 #?(:cljs
    (defmethod piece-type-on js/String
@@ -228,12 +227,12 @@
 #?(:clj
    (defmethod piece-color-on Long
      [board square]
-     (color-to-keyword (Piece/color (board/piece-on board square)))))
+     (color-to-keyword (Piece/color (b/piece-on board square)))))
 
 #?(:clj
    (defmethod piece-color-on Integer
      [board square]
-     (color-to-keyword (Piece/color (board/piece-on board square)))))
+     (color-to-keyword (Piece/color (b/piece-on board square)))))
 
 #?(:clj
    (defmethod piece-color-on String
@@ -243,7 +242,7 @@
 #?(:cljs
    (defmethod piece-color-on js/Number
      [board square]
-     (color-to-keyword (jsc/pieceColor (board/piece-on board square)))))
+     (color-to-keyword (jsc/pieceColor (b/piece-on board square)))))
 
 #?(:cljs
    (defmethod piece-color-on js/String
@@ -272,9 +271,9 @@
      (e.g (piece-count board :black :rook)) or two arguments representing
      board and piece with color (e.g. (piece-count board :wb))."
      ([board piece]
-      (board/piece-count board (piece-from-keyword piece)))
+      (b/piece-count board (piece-from-keyword piece)))
      ([board piece color]
-      (board/piece-count board (piece-make piece color)))))
+      (b/piece-count board (piece-make piece color)))))
 
 (defn parent
   "The parent board of the current board (i.e. the board as it was before the
