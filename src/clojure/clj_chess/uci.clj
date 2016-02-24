@@ -2,7 +2,8 @@
   "Functions for interacting with UCI chess engines."
   (:require [clojure.string :as string]
             [instaparse.core :as ip]
-            [me.raynes.conch.low-level :as sh]))
+            [me.raynes.conch.low-level :as sh])
+  (:import (java.io InputStreamReader BufferedReader)))
 
 (alter-var-root #'*out* (constantly *out*))
 
@@ -25,8 +26,8 @@
   (ip/parser
     "uci = id | uciok | readyok | option | bestmove | info
 
-    id = <'id'> <whitespace> (enginename | author)
-    enginename = <'name'> <whitespace> #'([\\SS\\ss])+'
+    id = <'id'> <whitespace> (engine-name | author)
+    engine-name = <'name'> <whitespace> #'([\\SS\\ss])+'
     author= <'author'> <whitespace> #'([\\SS\\ss])+'
 
     uciok = <'uciok'> {<whitespace>}
@@ -71,32 +72,33 @@
   [output]
   (let [p (uci-info-parser output)]
     (when-not (ip/failure? p)
-      (ip/transform uci-transform-options p))))
+      (second (ip/transform uci-transform-options p)))))
 
 
 (defn- get-uci-options
   "Ask for and parse the options for a UCI chess engine."
   [engine]
-  (binding [*in* (-> engine :out
-                     java.io.InputStreamReader.
-                     java.io.BufferedReader.)]
+  (binding [*in* (-> engine :out InputStreamReader. BufferedReader.)]
     (sh/feed-from-string engine "uci\n")
     (loop [id []
            options []]
       (let [output (parse-uci-output (read-line))]
-        ;(print output)
         (cond
           (nil? output) (recur id options)
-          (= :uciok (first (second output))) {:id id, :options options}
-          (= :id (first (second output))) (recur (conj id (second (second output))) options)
-          (= :option (first (second output))) (recur id (conj options (second (second output))))
+          (= :uciok (first output)) {:id id :options options}
+
+          (= :id (first output))
+          (recur (conj id (second output)) options)
+
+          (= :option (first output))
+          (recur id (conj options (second output)))
+
           :else (recur id options))))))
 
 (defn send-command
   "Sends a UCI command (as a string) to a chess engine."
   [engine command]
-  (sh/feed-from-string (engine :process) (str command "\n")))
-
+  (sh/feed-from-string (:process engine) (str command "\n")))
 
 (defn follow-process-output
   "Starts up a thread following the output of a process, and calls the
@@ -104,14 +106,11 @@
   until the process stops running or 'action' returns :finished."
   [process action]
   (future
-    (binding [*in* (-> process :out
-                       java.io.InputStreamReader.
-                       java.io.BufferedReader.)]
+    (binding [*in* (-> process :out InputStreamReader. BufferedReader.)]
       (loop []
         (when-let [line (read-line)]
           (when-not (= :finished (action line))
             (recur)))))))
-
 
 (defn think
   "Sends the engine the supplied UCI 'go' command, and starts a new thread to
@@ -123,7 +122,7 @@
   [engine go-command bestmove-action & [info-action]]
   (send-command engine go-command)
   (follow-process-output
-    (engine :process)
+    (:process engine)
     (fn [engine-output]
       (cond
         (and info-action (.startsWith engine-output "info"))
@@ -133,7 +132,6 @@
         (do
           (bestmove-action engine-output)
           :finished)))))
-
 
 (defn run-engine
   "Starts the UCI chess engine at the given path name, and returns an engine
@@ -145,6 +143,3 @@
     (when output-action
       (follow-process-output engine output-action))
     (merge options {:process engine})))
-
-
-
