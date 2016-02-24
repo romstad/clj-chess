@@ -249,7 +249,7 @@
 (defn pick-book-move
   "Pick a random book move from the board position, based on their
   probabilities. Returns nil if no book move is found."
-  [book-file-name board & {:keys [compact]}]
+  [book-file-name board]
   (let [entries (find-book-entries book-file-name board)
         r (rand)]
     (first (first (filter #(> (second %) r)
