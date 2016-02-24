@@ -1,6 +1,7 @@
 (ns clj-chess.uci
   "Functions for interacting with UCI chess engines."
-  (:require [clojure.string :as string]
+  (:require [clojure.core.async :refer [>! <! >!! <!! go chan thread]]
+            [clojure.string :as str :refer [starts-with?]]
             [instaparse.core :as ip]
             [me.raynes.conch.low-level :as sh])
   (:import (java.io InputStreamReader BufferedReader)))
@@ -125,13 +126,25 @@
     (:process engine)
     (fn [engine-output]
       (cond
-        (and info-action (.startsWith engine-output "info"))
+        (and info-action (starts-with? engine-output "info"))
         (info-action engine-output)
 
-        (.startsWith engine-output "bestmove")
+        (starts-with? engine-output "bestmove")
         (do
           (bestmove-action engine-output)
           :finished)))))
+
+(defn think-async
+  [engine go-command]
+  (let [out (chan)]
+    (send-command engine go-command)
+    (thread
+      (binding [*in* (-> engine :process :out InputStreamReader. BufferedReader.)]
+        (loop [line (read-line)]
+          (>!! out line)
+          (when-not (starts-with? line "bestmove")
+            (recur (read-line))))))
+    out))
 
 (defn run-engine
   "Starts the UCI chess engine at the given path name, and returns an engine
