@@ -4,13 +4,7 @@ import java.io.IOException;
 import java.io.PushbackReader;
 
 public class PGNReader {
-
-    enum TokenType {
-        STRING, INTEGER, PERIOD, ASTERISK, LEFT_BRACKET, RIGHT_BRACKET,
-        LEFT_PAREN, RIGHT_PAREN, LEFT_ANGLE, RIGHT_ANGLE, NAG, SYMBOL,
-        COMMENT, LINE_COMMENT
-    }
-
+    
     PushbackReader pbReader;
 
     public PGNReader(PushbackReader pr) {
