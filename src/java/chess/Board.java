@@ -1860,6 +1860,98 @@ public final class Board {
         return matches == 1 ? move : Move.NONE;
     }
 
+    static final int[] materialValues = {0, 1, 3, 3, 5, 9, 100, 0, 0, 1, 3, 3, 5, 9, 100, 0, 0, 0};
+
+
+    // see() is a static exchange evaluator: A function that given a from and
+    // to square tries to estimate the material win or loss obtained by moving
+    // the piece on 'from' to 'to'. The return value is an integer representing
+    // the number of pawns worth of material win or loss.
+    public int see(int from, int to) {
+        int us = getSideToMove(), them = PieceColor.opposite(us);
+        int piece = pieceOn(from), capture = pieceOn(to);
+
+        // Find all attackers to the destination square, with the moving piece
+        // removed, but with possibly an X-ray attacker added behind it:
+        long occ = SquareSet.remove(occupiedSquares(), from);
+        long attackers =
+                (SquareSet.rookAttacks(to, occ) & (rooks() | queens())) |
+                        (SquareSet.bishopAttacks(to, occ) & (bishops() | queens())) |
+                        (knightAttacks(to) & knights()) |
+                        (pawnAttacks(us, to) & pawnsOfColor(them)) |
+                        (pawnAttacks(them, to) & pawnsOfColor(us));
+        attackers &= occ;
+
+        // If the opponent has no attackers, we are finished:
+        if ((attackers & piecesOfColor(them)) == SquareSet.EMPTY) {
+            return materialValues[capture];
+        }
+
+        // The destination square is defended. We proceed by building up a
+        // "swap list" containing the material gain or loss at each stop in a
+        // sequence of captures to the destination square, where the sides
+        // alternatingly capture, and always capture with the least valuable
+        // piece. After each capture, we look for new X-ray attacks from
+        // behind the capturing piece.
+        int lastCapturingPieceValue = materialValues[piece];
+        int[] swapList = new int[32];
+        int n = 1;
+        int c = them;
+        int pt;
+
+        swapList[0] = materialValues[capture];
+
+        do {
+            // Locate the least valuable attacker for the side to move
+            for (pt = PieceType.PAWN;
+                 (attackers & piecesOfColorAndType(c, pt)) == SquareSet.EMPTY;
+                 pt++) {
+            }
+
+            // Remove the attacker we just found from the "attackers" square set,
+            // and scan for new X-ray attacks behind the attacker:
+            long b = attackers & piecesOfColorAndType(c, pt);
+            occ ^= (b & -b);
+            attackers |=
+                    (SquareSet.rookAttacks(to, occ) & (rooks() | queens())) |
+                    (SquareSet.bishopAttacks(to, occ) & (bishops() | queens()));
+            attackers &= occ;
+
+            // Add the new entry to the swap list:
+            swapList[n] = -swapList[n - 1] + lastCapturingPieceValue;
+            n++;
+
+            // Remember the value of the capturing piece, and change the side
+            // to move before beginning the next iteration:
+            lastCapturingPieceValue = materialValues[pt];
+            c = PieceColor.opposite(c);
+
+            // Stop after a king capture:
+            if (pt == PieceType.KING && (attackers & piecesOfColor(c)) != SquareSet.EMPTY) {
+                swapList[n++] = 100;
+                break;
+            }
+        } while ((attackers & piecesOfColor(c)) != SquareSet.EMPTY);
+
+        // Having built the swap list, we negamax through it to find the best
+        // achievable score from the point of view of the side to move:
+        while (--n != 0) {
+            swapList[n - 1] = Math.min(-swapList[n], swapList[n - 1]);
+        }
+
+        return swapList[0];
+    }
+
+
+    // see() is a static exchange evaluator: A function that given a move tries
+    // to estimate the material win or loss obtained by doing the move. The
+    // return value is an integer representing the number of pawns worth of
+    // material win or loss.
+    public int see(int move) {
+        return see(Move.from(move), Move.to(move));
+    }
+
+
     // toUCI() translates the board state (including as much of the move history
     // as necessary) to a format ready to be sent to a UCI chess engine, i.e. like
     // 'position fen' followed by a sequence of moves.

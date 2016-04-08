@@ -434,3 +434,11 @@
                [(move-to-uci m)
                 (perft (do-move board m) (- depth 1) true)])
              (moves board))))))
+
+#?(:clj
+   (defn static-exchange-evaluation
+     "Statically evaluates the material gain or loss of a move. The return
+     value is a number of pawns, using a material scale of pawn = 1,
+     knight = 3, bishop = 3, rook = 5, queen = 9."
+     [board move]
+     (.see board move)))
