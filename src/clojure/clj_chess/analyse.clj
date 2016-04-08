@@ -21,7 +21,7 @@
                                      finish-iteration? :finish-iteration?
                                      search-moves :search-moves}]
   (if-not (= 1 (count (keep identity [depth time nodes])))
-    (throw (Exception. "Exactly one if :depth, :time and :nodes must be supplied"))
+    (throw (Exception. "Exactly one of :depth, :time and :nodes must be supplied"))
     (let [command (go-command depth time nodes finish-iteration? search-moves)
           engine-output (do
                           (uci/send-command engine (chess/board-to-uci board))
