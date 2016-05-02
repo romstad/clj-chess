@@ -384,12 +384,13 @@
   (b/variation-to-san board uci-moves
                       :include-move-numbers include-move-numbers))
 
-(defn static-exchange-evaluation
-  "Statically evaluates the material gain or loss of a move. The return
+#?(:clj
+   (defn static-exchange-evaluation
+     "Statically evaluates the material gain or loss of a move. The return
   value is a number of pawns, using a material scale of pawn = 1,
   knight = 3, bishop = 3, rook = 5, queen = 9."
-  [board move]
-  (b/static-exchange-evaluation board move))
+     [board move]
+     (b/static-exchange-evaluation board move)))
 
 (defn new-game
   "Creates a new game object with the given PGN tags and start position. The
