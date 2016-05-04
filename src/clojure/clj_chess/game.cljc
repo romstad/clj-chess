@@ -29,7 +29,7 @@
   vectors of the form [<tag-name> <tag-value>]."
   [& {:keys [white black event site date round result start-fen other-tags]
       :or {white "?" black "?" event "?" site "?" date "?" round "?"
-           result "*" 
+           result "*"
            start-fen board/start-fen}}]
   (let [root-node {:board (board/make-board start-fen)
                    :node-id (generate-id)}]
@@ -209,14 +209,14 @@
   zipper for a modified game tree where the moves have been added at the
   zipper location."
   [zipper move-function moves remove-existing-moves?]
-  (reduce (fn [z m] 
+  (reduce (fn [z m]
             (-> (zip-add-move z move-function m remove-existing-moves?)
                 (zip/down)
                 (zip/rightmost)))
           zipper
           moves))
 
-(def ^:private zip-add-san-move-sequence 
+(def ^:private zip-add-san-move-sequence
   #(zip-add-move-sequence %1 board/move-from-san %2 false))
 
 (def ^:private zip-add-uci-move-sequence
@@ -340,7 +340,7 @@
 (defn add-uci-move
   "Adds a move in UCI notation to a game at a given node id. The move is
   added as the last child. If no node id is supplied, the current node of the
-  game is used. If remove-existing-moves? is true, any previously existing 
+  game is used. If remove-existing-moves? is true, any previously existing
   moves at the point of insertion are removed."
   [game uci-move & {:keys [node-id remove-existing-moves?]
                     :or {node-id (current-node-id game)}}]
@@ -375,7 +375,7 @@
 (defn add-move-sequence
   "Like add-move, but adds a sequence of moves rather than a single move. This
   is faster than calling add-move multiple times, because we don't have to
-  unzip and zip the tree for each added move. If remove-existing-moves? is 
+  unzip and zip the tree for each added move. If remove-existing-moves? is
   true, any previously existing moves at the point of insertion are removed."
   [game move-function moves node-id remove-existing-moves?]
   (let [z (-> (game-zip game node-id)
@@ -386,9 +386,9 @@
 
 
 (defn add-san-move-sequence
-  "Like add-san-move, but adds a sequence of moves rather than a single move. 
+  "Like add-san-move, but adds a sequence of moves rather than a single move.
   This is faster than calling add-san-move multiple times, because we don't
-  have to unzip and zip the tree for each added move. If 
+  have to unzip and zip the tree for each added move. If
   remove-existing-moves? is true, any previously existing moves at the point
   of insertion are removed."
   [game san-moves & {:keys [node-id remove-existing-moves?]
@@ -399,7 +399,7 @@
 
 
 (defn add-uci-move-sequence
-  "Like add-uci-move, but adds a sequence of moves rather than a single move. 
+  "Like add-uci-move, but adds a sequence of moves rather than a single move.
   This is faster than calling add-uci-move multiple times, because we don't
   have to unzip and zip the tree for each added move. If
   remove-existing-moves? is true, any previously existing moves at the point
@@ -662,7 +662,7 @@
   (-> game board board/side-to-move))
 
 
-(defn move-text 
+(defn move-text
   "The move text of the game in short algebraic notation, optionally including
   comments and variations."
   [game & {:keys [include-comments? include-variations?]
@@ -674,9 +674,9 @@
           (node-to-string [node]
             (let [board (:board node)
                   children (:children node)]
-              (str 
+              (str
                 (when-not (empty? children)
-                  (str 
+                  (str
                     ;; Pre-comment for first child move:
                     (when include-comments?
                       (when-let [c (:pre-comment (first children))]
@@ -684,7 +684,7 @@
                     ;; SAN of first child move (main variation):
                     (let [m (-> (first children) :board board/last-move)
                           wtm (= :white (board/side-to-move board))]
-                      (str (board/move-to-san 
+                      (str (board/move-to-san
                              board m :include-move-number? wtm)
                            ;; Add a space after the move if it is not followed
                            ;; by further moves, comments or variations:
@@ -704,8 +704,8 @@
                                           (when include-comments?
                                             (when-let [c (:pre-comment %)]
                                               (str "{" c "} ")))
-                                          (board/move-to-san 
-                                            board m :include-move-number? true) 
+                                          (board/move-to-san
+                                            board m :include-move-number? true)
                                           (when-not (terminal? %)
                                             " ")
                                           (when include-comments?

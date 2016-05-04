@@ -208,7 +208,7 @@
   to an actual move."
   [board byte-move]
   (nth (sort-by move-to-uci (moves board)) byte-move))
- 
+
 (defn move-to-san
   "Translates a move to a string in short algebraic notation, optionally
   including a preceding move number."
@@ -321,10 +321,10 @@
       result
       (let [move (move-from-uci b (first moves))
             wtm (= :white (side-to-move b))
-            san-move (move-to-san 
-                       b move 
+            san-move (move-to-san
+                       b move
                        :include-move-number? (and include-move-numbers
-                                                  (or wtm (empty? result))))]  
+                                                  (or wtm (empty? result))))]
         (recur (rest moves)
                (do-move b move)
                (if (empty? result)
