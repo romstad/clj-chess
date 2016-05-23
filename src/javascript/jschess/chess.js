@@ -47,10 +47,14 @@ var pieceColor = function (piece) {
    return Math.floor(piece / 8)
 }
 
+chess.pieceColor = pieceColor
+
 // Get the type of a piece.
 var pieceType = function (piece) {
    return piece % 8
 }
+
+chess.pieceType = pieceType
 
 // Test whether a piece is a slider, i.e. a bishop, a rook or a wueen.
 var isSlider = function (piece) {
@@ -176,6 +180,8 @@ var squareToString = function (square) {
    return fileToString(squareFile(square)) + rankToString(squareRank(square))
 }
 
+chess.squareToString = squareToString
+
 // Convert a string in algebraic notation to a file.
 var fileFromString = function (string) {
    var result = string.charCodeAt(0) - "a".charCodeAt(0) + FILE_MIN
@@ -194,6 +200,8 @@ var squareFromString = function (string) {
    var rank = rankFromString(string[1])
    return fileIsOK(file) && rankIsOK(rank) ? squareMake(file, rank) : SQUARE_NONE
 }
+
+chess.squareFromString = squareFromString
 
 // Convert a square from compressed format (a1=0, h8=63) to regular format
 // (a1 = 4 + 4*16, h8 = 11 + 11*16)
