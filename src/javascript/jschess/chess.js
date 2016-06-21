@@ -471,7 +471,7 @@ Board.prototype.toFEN = function () {
          var piece = this.board[squareMake(file, rank)]
          if (piece === EMPTY) {
             emptySquareCount++
-         } else { 
+         } else {
             if (emptySquareCount > 0) {
                buffer += emptySquareCount
             }
@@ -1740,7 +1740,7 @@ Board.prototype.computeKey = function () {
 
     // En passant
     if (this.epSquare != SQUARE_NONE) {
-        result ^= zobEp(squareFile(this.epSquare))
+        result ^= zobEp[squareFile(this.epSquare)]
     }
 
     // Side to move
