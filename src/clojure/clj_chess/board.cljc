@@ -442,3 +442,11 @@
      knight = 3, bishop = 3, rook = 5, queen = 9."
      [board move]
      (.see board move)))
+
+#?(:clj
+   (defn flip
+     "Returns a flipped copy of a board, with the black and white pieces,
+     the side to move, the castle rights and the en passant capture square
+     flipped."
+     [board]
+     (.flip board)))

@@ -30,6 +30,12 @@ public final class Board {
         int lastMove;
         long key;
 
+        // Constructor, creates an empty MutableBoard
+        public MutableBoard() {
+            clear();
+        }
+
+
         // Constructor, initializes a MutableBoard from a string in Forsyth-Edwards
         // notation.
         public MutableBoard(String fen) {
@@ -78,11 +84,7 @@ public final class Board {
                 epSquare = Square.fromString(components[3]);
             }
 
-            // Checking pieces
-            checkers = findCheckers();
-
-            // Hash key
-            key = computeKey();
+            initialize();
 
             assert(isOK());
         }
@@ -130,6 +132,15 @@ public final class Board {
         }
 
 
+        public void initialize() {
+            // Checking pieces
+            checkers = findCheckers();
+
+            // Hash key
+            key = computeKey();
+        }
+
+
         /// Get the current hash key.
         public long getKey() {
             return key;
@@ -149,6 +160,10 @@ public final class Board {
             return sideToMove;
         }
 
+        public void setSideToMove(int newValue) {
+            sideToMove = newValue;
+        }
+
         /// The last move played to reach this position, or Move.NONE if
         /// we're at the beginning of the game (board has no parent):
         public int getLastMove() { return lastMove; }
@@ -156,9 +171,17 @@ public final class Board {
         /// Number of half moves since the last non-reversible move was made
         public int getRule50Counter() { return rule50Counter; }
 
+        public void setRule50Counter(int newValue) {
+            rule50Counter = newValue;
+        }
+
         /// Number of half moves played in the current game before reaching
         /// this position.
         public int getGamePly() { return gamePly; }
+
+        public void setGamePly(int newValue) {
+            gamePly = newValue;
+        }
 
         /// The piece on the given square, or Piece.EMPTY if the square is empty.
         public int pieceOn(int square) {
@@ -174,6 +197,14 @@ public final class Board {
         /// capture is possible, Square.NONE is returned.
         public int getEpSquare() {
             return epSquare;
+        }
+
+        public void setEpSquare(int newValue) {
+            epSquare = newValue;
+        }
+
+        public void setCastleRights(int newValue) {
+            castleRights = newValue;
         }
 
         /// Square set representing all occupied squares on the board.
@@ -733,7 +764,7 @@ public final class Board {
         }
 
         /// Add a piece to the given square.
-        private void putPiece(int piece, int square) {
+        public void putPiece(int piece, int square) {
             assert(Piece.isOK(piece));
             assert(Square.isOK(square));
 
@@ -1977,6 +2008,49 @@ public final class Board {
             }
         }
         return result.toString();
+    }
+
+
+    // flip() returns a flipped copy of the board: The white and black sides, the
+    // side to move, the castle rights and the en passant squares are all switched.
+    public Board flip() {
+        MutableBoard st = new MutableBoard();
+
+        for (int s = Square.A1; s <= Square.H8; s++) {
+            int p = pieceOn(s);
+            if (p != Piece.EMPTY) {
+                int s2 = s ^ 070;
+                st.putPiece(Piece.make(PieceColor.opposite(Piece.color(p)), Piece.type(p)), s2);
+            }
+        }
+
+        st.sideToMove =  PieceColor.opposite(getSideToMove());
+
+        int cr = 0;
+        if (canCastleKingside(PieceColor.BLACK)) {
+            cr |= 1;
+        }
+        if (canCastleKingside(PieceColor.WHITE)) {
+            cr |= 2;
+        }
+        if (canCastleKingside(PieceColor.BLACK)) {
+            cr |= 4;
+        }
+        if (canCastleKingside(PieceColor.WHITE)) {
+            cr |= 8;
+        }
+        st.setCastleRights(cr);
+
+        if (getEpSquare() != Square.NONE) {
+            st.setEpSquare(getEpSquare() ^ 070);
+        }
+
+        st.setRule50Counter(getRule50Counter());
+        st.setGamePly(getGamePly());
+
+        st.initialize();
+
+        return new Board(st);
     }
 
     static long[] zobrist = new long[2 * 8 * 64];

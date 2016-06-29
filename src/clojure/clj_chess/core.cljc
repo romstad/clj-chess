@@ -108,6 +108,14 @@
   [& [fen]]
   (b/make-board fen))
 
+#?(:clj
+   (defn flip-board
+     "Returns a flipped copy of a board, with the black and white pieces,
+     the side to move, the castle rights and the en passant capture square
+     flipped."
+     [board]
+     (b/flip board)))
+
 (defn to-fen
   "Converts the board to a string in Forsyth-Edwards notation."
   [board]
