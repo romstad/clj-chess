@@ -332,9 +332,10 @@
   any previously existing moves at the point of insertion are removed."
   [game san-move & {:keys [node-id remove-existing-moves?]
                     :or {node-id (current-node-id game)}}]
-  (add-move game board/move-from-san san-move
-            node-id
-            remove-existing-moves?))
+  (let [node-id (or node-id (current-node-id game))]
+    (add-move game board/move-from-san san-move
+              node-id
+              remove-existing-moves?)))
 
 
 (defn add-uci-move
