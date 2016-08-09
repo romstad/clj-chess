@@ -229,7 +229,7 @@ PGNReader.prototype.readToken = function () {
     } else if (c === "(") {
         return this.readLeftParen()
     } else if (c === ")") {
-        return this.readRightParen
+        return this.readRightParen()
     } else if (c === "<") {
         return this.readLeftAngle()
     } else if (c === ">") {
