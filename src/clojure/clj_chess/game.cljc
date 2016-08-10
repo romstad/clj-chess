@@ -806,26 +806,32 @@
   "Creates a game from ECN data, or from parsed PGN."
   [ecn & {:keys [include-annotations? san]
           :or {include-annotations? true san false}}]
-  (try
-    (let [game (reduce #(apply set-tag %1 %2)
-                       (new-game)
-                       (rest (second ecn)))]
-      (case (first (nth ecn 2))
-        :byte-moves (add-byte-move-sequence game (vec (second (nth ecn 2))))
-        :moves (if-not include-annotations?
-                 (-> game ((if san
-                             add-san-move-sequence
-                             add-uci-move-sequence)
-                            (filter string? (-> ecn (nth 2) rest))))
-                 (let [z (zip-add-ecn-data (if san
-                                             board/move-from-san
-                                             board/move-from-uci)
-                                           (game-zip game) (nth ecn 2))]
-                   (to-beginning
-                     (assoc game :root-node (zip/root z)))))))
-    (catch #?(:clj Exception :cljs js/Error) _
-      (println "Illegal or ambiguous move in game:")
-      (prn ecn))))
+  (let [fen (reduce (fn [fen tag-value-pair]
+                      (if-not (= (first tag-value-pair) "FEN")
+                        fen
+                        (second tag-value-pair)))
+                    board/start-fen
+                    (rest (second ecn)))]
+    (try
+      (let [game (reduce #(apply set-tag %1 %2)
+                         (new-game :start-fen fen)
+                         (rest (second ecn)))]
+        (case (first (nth ecn 2))
+          :byte-moves (add-byte-move-sequence game (vec (second (nth ecn 2))))
+          :moves (if-not include-annotations?
+                   (-> game ((if san
+                               add-san-move-sequence
+                               add-uci-move-sequence)
+                              (filter string? (-> ecn (nth 2) rest))))
+                   (let [z (zip-add-ecn-data (if san
+                                               board/move-from-san
+                                               board/move-from-uci)
+                                             (game-zip game) (nth ecn 2))]
+                     (to-beginning
+                       (assoc game :root-node (zip/root z)))))))
+      (catch #?(:clj Exception :cljs js/Error) _
+        (println "Illegal or ambiguous move in game:")
+        (prn ecn)))))
 
 (defn from-pgn
   "Creates a game from a PGN string."
