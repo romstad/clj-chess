@@ -25,6 +25,7 @@
 (def black-rook 12)
 (def black-queen 13)
 (def black-king 14)
+(def empty-square 16)
 (def blocker 23)
 
 
@@ -147,6 +148,16 @@
   "The piece on a given square."
   [board square]
   (.pieceOn board square))
+
+(defn empty-square?
+  "Tests whether the given square is empty."
+  [board square]
+  (= empty-square (piece-on board square)))
+
+(defn occupied-square?
+  "Tests whether the given square is occupied."
+  [board square]
+  (not (empty-square? board square)))
 
 (defn can-castle-kingside?
   "Tests whether the given side still has the right to castle kingside."
