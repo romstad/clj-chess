@@ -81,7 +81,7 @@
   standard initial position is used."
   [& [fen allow-king-capture?]]
   #?(:clj (Board/boardFromFen (or fen start-fen)
-                              (not allow-king-capture?))
+                              allow-king-capture?)
      :cljs (.fromFEN jsc/Board (or fen start-fen))))
 
 #?(:clj
@@ -89,7 +89,7 @@
      "Creates an empty board with the given number of files and ranks,
      optionally allowing king captures."
      [file-count rank-count & [allow-king-capture?]]
-     (Board/boardWithSize file-count rank-count (not allow-king-capture?))))
+     (Board/boardWithSize file-count rank-count allow-king-capture?)))
 
 #?(:clj
    (defn put-piece

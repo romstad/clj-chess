@@ -36,7 +36,7 @@ public final class Board {
         boolean kingIsSpecial;
 
         // Constructor, creates an empty MutableBoard
-        public MutableBoard(int files, int ranks, boolean kingSpecial) {
+        public MutableBoard(int files, int ranks, boolean allowKingCaptures) {
             clear();
             fileCount = files;
             rankCount = ranks;
@@ -51,19 +51,19 @@ public final class Board {
                     putPiece(Piece.BLOCKER, Square.make(file, rank));
                 }
             }
-            kingIsSpecial = kingSpecial;
+            kingIsSpecial = !allowKingCaptures;
         }
 
         public MutableBoard() {
-            this(8, 8, true);
+            this(8, 8, false);
         }
 
 
         // Constructor, initializes a MutableBoard from a string in Forsyth-Edwards
         // notation.
-        public MutableBoard(String fen, boolean kingSpecial) {
+        public MutableBoard(String fen, boolean allowKingCaptures) {
             clear();
-            kingIsSpecial = kingSpecial;
+            kingIsSpecial = !allowKingCaptures;
 
             String[] components = fen.split(" ");
             String s;
@@ -136,7 +136,7 @@ public final class Board {
 
 
         public MutableBoard(String fen) {
-            this(fen, true);
+            this(fen, false);
         }
 
 
@@ -1557,22 +1557,22 @@ public final class Board {
     }
 
     /// Factory methods for generating new boards from a FEN:
-    static public Board boardFromFen(String fen, boolean kingIsSpecial) {
-        return new Board(new MutableBoard(fen, kingIsSpecial));
+    static public Board boardFromFen(String fen, boolean allowKingCaptures) {
+        return new Board(new MutableBoard(fen, allowKingCaptures));
     }
 
     static public Board boardFromFen(String fen) {
-        return new Board(new MutableBoard(fen, true));
+        return new Board(new MutableBoard(fen, false));
     }
 
     /// Factory methods for generating new boards with a file and a rank
     /// count:
-    static public Board boardWithSize(int fileCount, int rankCount, boolean kingIsSpecial) {
-        return new Board(new MutableBoard(fileCount, rankCount, kingIsSpecial));
+    static public Board boardWithSize(int fileCount, int rankCount, boolean allowKingCaptures) {
+        return new Board(new MutableBoard(fileCount, rankCount, allowKingCaptures));
     }
 
     static public Board boardWithSize(int fileCount, int rankCount) {
-        return new Board(new MutableBoard(fileCount, rankCount, true));
+        return new Board(new MutableBoard(fileCount, rankCount, false));
     }
 
     /// Put a piece or a blocker on a square, and return the new board:
