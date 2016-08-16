@@ -3,6 +3,8 @@ package chess;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.random.MersenneTwister;
 
 ////
@@ -29,36 +31,79 @@ public final class Board {
         int gamePly;
         int lastMove;
         long key;
+        long blockers;
+        int fileCount, rankCount;
+        boolean kingIsSpecial;
 
         // Constructor, creates an empty MutableBoard
-        public MutableBoard() {
+        public MutableBoard(int files, int ranks, boolean kingSpecial) {
             clear();
+            fileCount = files;
+            rankCount = ranks;
+            int file, rank;
+            for (file = Square.FILE_H; file > fileCount - 1; file--) {
+                for (rank = Square.RANK_1; rank <= Square.RANK_8; rank++) {
+                    putPiece(Piece.BLOCKER, Square.make(file, rank));
+                }
+            }
+            for (rank = Square.RANK_8; rank > rankCount - 1; rank--) {
+                for (file = Square.FILE_A; file <= Square.FILE_H; file++) {
+                    putPiece(Piece.BLOCKER, Square.make(file, rank));
+                }
+            }
+            kingIsSpecial = kingSpecial;
+        }
+
+        public MutableBoard() {
+            this(8, 8, true);
         }
 
 
         // Constructor, initializes a MutableBoard from a string in Forsyth-Edwards
         // notation.
-        public MutableBoard(String fen) {
+        public MutableBoard(String fen, boolean kingSpecial) {
             clear();
+            kingIsSpecial = kingSpecial;
 
             String[] components = fen.split(" ");
             String s;
 
             // Board
             s = components[0];
-            int rank = Square.RANK_8, file = Square.FILE_A;
+
+            // Place blockers on top ranks if rank count less than 8:
+            rankCount = StringUtils.countMatches(s, "/") + 1;
+            for (int rank = Square.RANK_8; rank > rankCount - 1; rank--) {
+                for (int file = Square.FILE_A; file <= Square.FILE_H; file++) {
+                    putPiece(Piece.BLOCKER, Square.make(file, rank));
+                }
+            }
+
+            fileCount = 0;
+            int rank = rankCount - 1, file = Square.FILE_A;
             for (int i = 0; i < s.length(); i++) {
                 if (Character.isDigit(fen.charAt(i))) { // Skip the given number of files
                     file += (int) fen.charAt(i) - (int) '1' + 1;
                 } else if (fen.charAt(i) == '/') { // Move to next rank
+                    fileCount = Math.max(fileCount, file);
                     file = Square.FILE_A;
                     rank--;
+                } else if (fen.charAt(i) == 'x') { // Blocker
+                    putPiece(Piece.BLOCKER, Square.make(file, rank));
+                    file++;
                 } else { // Must be a piece, unless the FEN string is broken
                     int piece = Piece.fromChar(fen.charAt(i));
                     int square = Square.make(file, rank);
                     assert(Piece.isOK(piece));
                     putPiece(piece, square);
                     file++;
+                }
+            }
+
+            // Place blockers in the rightmost files if file count less than 8:
+            for (file = Square.FILE_H; file > fileCount - 1; file--) {
+                for (rank = Square.RANK_1; rank <= Square.RANK_8; rank++) {
+                    putPiece(Piece.BLOCKER, Square.make(file, rank));
                 }
             }
 
@@ -90,6 +135,11 @@ public final class Board {
         }
 
 
+        public MutableBoard(String fen) {
+            this(fen, true);
+        }
+
+
         // Copy constructor
         public MutableBoard(MutableBoard original) {
             sideToMove = original.sideToMove;
@@ -103,6 +153,10 @@ public final class Board {
             gamePly = original.gamePly;
             lastMove = original.lastMove;
             key = original.key;
+            blockers = original.blockers;
+            fileCount = original.fileCount;
+            rankCount = original.rankCount;
+            kingIsSpecial = original.kingIsSpecial;
         }
 
         // Reset the board to an empty state with white to move.
@@ -129,6 +183,10 @@ public final class Board {
             key = 0;
             rule50Counter = 0;
             gamePly = 0;
+            blockers = 0;
+            fileCount = 8;
+            rankCount = 8;
+            kingIsSpecial = true;
         }
 
 
@@ -153,6 +211,24 @@ public final class Board {
         /// ancestors to check for repetition draws.
         private Board getGrandparent() {
             return getParent() == null ? null : getParent().getParent();
+        }
+
+        /// Maximum ranks and files, for smaller boards.
+        public int maxRank() {
+            return Square.RANK_MAX - (8 - rankCount);
+        }
+
+        public int maxFile() {
+            return Square.FILE_MAX - (8 - fileCount);
+        }
+
+        /// Getters for rank and file counts
+        public int getFileCount() {
+            return fileCount;
+        }
+
+        public int getRankCount() {
+            return rankCount;
         }
 
         /// Getter method for the current side to move.
@@ -209,12 +285,17 @@ public final class Board {
 
         /// Square set representing all occupied squares on the board.
         public long occupiedSquares() {
-            return piecesOfType[0];
+            return piecesOfType[0] | blockers;
         }
 
         /// Square set representing all empty squares on the board.
         public long emptySquares() {
             return ~occupiedSquares();
+        }
+
+        /// Blocked squares, for boards with "holes".
+        public long blockedSquares() {
+            return blockers;
         }
 
         /// The set of squares occupied by pieces of the given color.
@@ -302,37 +383,37 @@ public final class Board {
         /// The set of squares that would be attacked by a pawn of the given color
         /// on the given square.
         public long pawnAttacks(int color, int square) {
-            return SquareSet.pawnAttacks(color, square);
+            return SquareSet.pawnAttacks(color, square) & ~blockedSquares();
         }
 
         /// The set of squares that would be attacked by a knight of the given
         /// color on the given square.
         public long knightAttacks(int square) {
-            return SquareSet.knightAttacks(square);
+            return SquareSet.knightAttacks(square) & ~blockedSquares();
         }
 
         /// The set of squares that would be attacked by a bishop of the given
         /// color on the given square.
         public long bishopAttacks(int square) {
-            return SquareSet.bishopAttacks(square, occupiedSquares());
+            return SquareSet.bishopAttacks(square, occupiedSquares()) & ~blockedSquares();
         }
 
         /// The set of squares that would be attacked by a rook of the given color
         /// on the given square.
         public long rookAttacks(int square) {
-            return SquareSet.rookAttacks(square, occupiedSquares());
+            return SquareSet.rookAttacks(square, occupiedSquares()) & ~blockedSquares();
         }
 
         /// The set of squares that would be attacked by a queen of the given color
         /// on the given square.
         public long queenAttacks(int square) {
-            return SquareSet.queenAttacks(square, occupiedSquares());
+            return SquareSet.queenAttacks(square, occupiedSquares()) & ~blockedSquares();
         }
 
         /// The set of squares that would be attacked by a king of the given color
         /// on the given square.
         public long kingAttacks(int square) {
-            return SquareSet.kingAttacks(square);
+            return SquareSet.kingAttacks(square) & ~blockedSquares();
         }
 
         /// Tests whether the given square is attacked by the given color.
@@ -355,6 +436,11 @@ public final class Board {
 
         /// The set of squares containing pinned pieces of the given color.
         public long pinnedPieces(int color) {
+            // If king is not special, there cannot be any pinned pieces.
+            if (!kingIsSpecial) {
+                return 0;
+            }
+
             long pinned = SquareSet.EMPTY, occ = occupiedSquares();
             long sliders, pinners, blockers;
             int ksq = kingSquare(color);
@@ -396,6 +482,9 @@ public final class Board {
 
         /// Test whether the side to move is in check
         public boolean isCheck() {
+            if (!kingIsSpecial) {
+                return false;
+            }
             return checkers != SquareSet.EMPTY;
         }
 
@@ -403,6 +492,9 @@ public final class Board {
         /// Find all checking pieces, return them as an array of squares.
         public List<Integer> checkingPieces() {
             List<Integer> result = new ArrayList<>();
+            if (!kingIsSpecial) {
+                return result;
+            }
 
             long ss = checkers;
             while (ss != SquareSet.EMPTY) {
@@ -438,6 +530,9 @@ public final class Board {
 
         /// Generate a list of all legal moves.
         public List<Integer> legalMoves() {
+            if (!kingIsSpecial) {
+                return generateMoves();
+            }
             List<Integer>result = new ArrayList<Integer>();
             for (int move : generateMoves()) {
                 if (moveIsLegal(move)) {
@@ -477,6 +572,11 @@ public final class Board {
         /// Test whether a pseudo-legal move (as generated by generateMoves()) is
         /// actually legal.
         public boolean moveIsLegal(int move) {
+
+            // If the king is not special, all pseudo-legal moves are legal.
+            if (!kingIsSpecial) {
+                return true;
+            }
 
             // Because we use a special move generator that only generates legal
             // moves when we're in check, we don't have to do any extra legality
@@ -588,26 +688,45 @@ public final class Board {
                 kingSquares[us] = to;
             }
 
-            if (from == Square.A1 || to == Square.A1) {
+            int a1 = Square.A1, h1 = Square.H1, e1 = Square.E1;
+            int a8 = Square.make(Square.FILE_A, rankCount - 1);
+            int h8 = Square.make(Square.FILE_H, rankCount - 1);
+            int e8 = Square.make(Square.FILE_E, rankCount - 1);
+
+            if (from == a1 || to == a1) {
                 castleRights &= ~CASTLE_RIGHTS_WHITE_OOO;
             }
-            if (from == Square.H1 || to == Square.H1) {
+            if (from == h1 || to == h1) {
                 castleRights &= ~CASTLE_RIGHTS_WHITE_OO;
             }
-            if (from == Square.A8 || to == Square.A8) {
+            if (from == a8 || to == a8) {
                 castleRights &= ~CASTLE_RIGHTS_BLACK_OOO;
             }
-            if (from == Square.H8 || to == Square.H8) {
+            if (from == h8 || to == h8) {
                 castleRights &= ~CASTLE_RIGHTS_BLACK_OO;
             }
-            if (from == Square.E1) {
+            if (from == e1) {
                 castleRights &= ~(CASTLE_RIGHTS_WHITE_OO | CASTLE_RIGHTS_WHITE_OOO);
             }
-            if (from == Square.E8) {
+            if (from == e8) {
                 castleRights &= ~(CASTLE_RIGHTS_BLACK_OO | CASTLE_RIGHTS_BLACK_OOO);
             }
 
             checkers = findCheckers();
+            key = computeKey();
+        }
+
+
+        /// Do a null move. Only possible when the side to move is not in check.
+        public void doNullMove() {
+            assert(!isCheck());
+
+            sideToMove = PieceColor.opposite(sideToMove);
+            epSquare = Square.NONE;
+            rule50Counter++;
+            gamePly++;
+            lastMove = Move.NONE;
+
             key = computeKey();
         }
 
@@ -678,9 +797,9 @@ public final class Board {
             StringBuilder buffer = new StringBuilder(100);
 
             // Board
-            for (int rank = Square.RANK_8; rank >= Square.RANK_1; rank--) {
+            for (int rank = rankCount - 1; rank >= Square.RANK_1; rank--) {
                 int emptySquareCount = 0;
-                for (int file = Square.FILE_A; file <= Square.FILE_H; file++) {
+                for (int file = Square.FILE_A; file < fileCount; file++) {
                     int square = Square.make(file, rank);
                     int piece = pieceOn(square);
                     if (piece == Piece.EMPTY) {
@@ -751,7 +870,9 @@ public final class Board {
                 for (int file = Square.FILE_A; file <= Square.FILE_H; file++) {
                     int square = Square.make(file, rank);
                     int piece = pieceOn(square);
-                    if (piece == Piece.EMPTY) {
+                    if (piece == Piece.BLOCKER) {
+                        System.out.print("|###");
+                    } else if (piece == Piece.EMPTY) {
                         System.out.print((file + rank) % 2 == 0 ? "|   " : "| . ");
                     } else {
                         System.out.print(pieceStrings[piece]);
@@ -765,16 +886,21 @@ public final class Board {
 
         /// Add a piece to the given square.
         public void putPiece(int piece, int square) {
-            assert(Piece.isOK(piece));
+            assert(Piece.isOK(piece) || piece == Piece.BLOCKER);
             assert(Square.isOK(square));
 
             board[square] = piece;
-            int color = Piece.color(piece), type = Piece.type(piece);
-            piecesOfColor[color] = SquareSet.add(piecesOfColor[color], square);
-            piecesOfType[type] = SquareSet.add(piecesOfType[type], square);
-            piecesOfType[0] = SquareSet.add(piecesOfType[0], square);
-            if (type == PieceType.KING) {
-                kingSquares[color] = square;
+            if (piece == Piece.BLOCKER) {
+                blockers = SquareSet.add(blockers, square);
+                piecesOfType[0] = SquareSet.add(piecesOfType[0], square);
+            } else {
+                int color = Piece.color(piece), type = Piece.type(piece);
+                piecesOfColor[color] = SquareSet.add(piecesOfColor[color], square);
+                piecesOfType[type] = SquareSet.add(piecesOfType[type], square);
+                piecesOfType[0] = SquareSet.add(piecesOfType[0], square);
+                if (type == PieceType.KING) {
+                    kingSquares[color] = square;
+                }
             }
         }
 
@@ -785,12 +911,17 @@ public final class Board {
             assert(!isEmpty(square));
 
             int piece = board[square], color = Piece.color(piece), type = Piece.type(piece);
-            assert(type != PieceType.KING);
+            assert(!kingIsSpecial || type != PieceType.KING);
 
             board[square] = Piece.EMPTY;
-            piecesOfColor[color] = SquareSet.remove(piecesOfColor[color], square);
-            piecesOfType[type] = SquareSet.remove(piecesOfType[type], square);
-            piecesOfType[0] = SquareSet.remove(piecesOfType[0], square);
+            if (piece == Piece.BLOCKER) {
+                blockers = SquareSet.remove(blockers, square);
+                piecesOfType[0] = SquareSet.remove(piecesOfType[0], square);
+            } else {
+                piecesOfColor[color] = SquareSet.remove(piecesOfColor[color], square);
+                piecesOfType[type] = SquareSet.remove(piecesOfType[type], square);
+                piecesOfType[0] = SquareSet.remove(piecesOfType[0], square);
+            }
         }
 
 
@@ -801,6 +932,7 @@ public final class Board {
             assert(Square.isOK(from));
             assert(Square.isOK(to));
             assert(!isEmpty(from));
+            assert(pieceOn(from) != Piece.BLOCKER);
             assert(isEmpty(to));
 
             int piece = pieceOn(from), color = Piece.color(piece), type = Piece.type(piece);
@@ -818,6 +950,9 @@ public final class Board {
 
         /// Compute the set of squares occupied by checking pieces.
         private long findCheckers() {
+            if (!kingIsSpecial) {
+                return 0;
+            }
             return attacksTo(kingSquare(sideToMove), PieceColor.opposite(sideToMove));
         }
 
@@ -825,7 +960,7 @@ public final class Board {
         /// Compute the Zobrist hash key for the current position.
         private long computeKey() {
             long result = 0;
-            long occ = occupiedSquares();
+            long occ = occupiedSquares() & ~blockedSquares();
 
             while (occ != SquareSet.EMPTY) {
                 int square = SquareSet.first(occ);
@@ -853,6 +988,9 @@ public final class Board {
 
             if (sideToMove == PieceColor.WHITE) {
                 promotionZone = SquareSet.RANK_8_SQUARES;
+                for (int i = 8; i > rankCount; i--) {
+                    promotionZone  = SquareSet.shiftS(promotionZone);
+                }
                 thirdRank = SquareSet.RANK_3_SQUARES;
 
                 // Non-promotion captures
@@ -915,6 +1053,9 @@ public final class Board {
             } else { // sideToMove == pieceColor.BLACK
                 promotionZone = SquareSet.RANK_1_SQUARES;
                 thirdRank = SquareSet.RANK_6_SQUARES;
+                for (int i = 8; i > rankCount; i--) {
+                    thirdRank = SquareSet.shiftS(thirdRank);
+                }
 
                 // Non-promotion captures
                 target = SquareSet.shiftSW(pawns) & theirPieces & ~promotionZone;
@@ -991,7 +1132,9 @@ public final class Board {
         /// Generate all pseudo-legal knight moves, and add them to the supplied
         /// list.
         private void generateKnightMoves(List<Integer> moves) {
-            long source = knightsOfColor(sideToMove), target = ~piecesOfColor(sideToMove), ss;
+            long source = knightsOfColor(sideToMove);
+            long target = ~piecesOfColor(sideToMove) & ~blockedSquares();
+            long ss;
 
             while (source != SquareSet.EMPTY) {
                 int from = SquareSet.first(source);
@@ -1009,7 +1152,9 @@ public final class Board {
         /// Generate all pseudo-legal bishop moves, and add them to the supplied
         /// list.
         private void generateBishopMoves(List<Integer> moves) {
-            long source = bishopsOfColor(sideToMove), target = ~piecesOfColor(sideToMove), ss;
+            long source = bishopsOfColor(sideToMove);
+            long target = ~piecesOfColor(sideToMove) & ~blockedSquares();
+            long ss;
 
             while (source != SquareSet.EMPTY) {
                 int from = SquareSet.first(source);
@@ -1027,7 +1172,9 @@ public final class Board {
         /// Generate all pseudo-legal rook moves, and add them to the supplied
         /// list.
         private void generateRookMoves(List<Integer> moves) {
-            long source = rooksOfColor(sideToMove), target = ~piecesOfColor(sideToMove), ss;
+            long source = rooksOfColor(sideToMove);
+            long target = ~piecesOfColor(sideToMove) & ~blockedSquares();
+            long ss;
 
             while (source != SquareSet.EMPTY) {
                 int from = SquareSet.first(source);
@@ -1045,7 +1192,9 @@ public final class Board {
         /// Generate all pseudo-legal queen moves, and add them to the supplied
         /// list.
         private void generateQueenMoves(List<Integer> moves) {
-            long source = queensOfColor(sideToMove), target = ~piecesOfColor(sideToMove), ss;
+            long source = queensOfColor(sideToMove);
+            long target = ~piecesOfColor(sideToMove) & ~blockedSquares();
+            long ss;
 
             while (source != SquareSet.EMPTY) {
                 int from = SquareSet.first(source);
@@ -1065,7 +1214,8 @@ public final class Board {
         private void generateKingMoves(List<Integer> moves) {
             int us = sideToMove, them = PieceColor.opposite(us);
             int from = kingSquare(us);
-            long target = ~piecesOfColor(us), ss;
+            long target = ~piecesOfColor(us) & ~blockedSquares();
+            long ss;
 
             ss = kingAttacks(from) & target;
             while (ss != SquareSet.EMPTY) {
@@ -1092,6 +1242,8 @@ public final class Board {
         /// check. Unlike the other move generation functions, generateEvasions
         /// is guaranteed to only return legal moves.
         private void generateEvasions(List<Integer> moves) {
+
+            assert(kingIsSpecial);
 
             int us = sideToMove, them = PieceColor.opposite(us), ksq = kingSquare(us);
             long ss1, ss2;
@@ -1132,7 +1284,7 @@ public final class Board {
                 while (ss1 != SquareSet.EMPTY) {
                     int from = SquareSet.first(ss1);
                     ss1 = SquareSet.removeFirst(ss1);
-                    if (Square.pawnRank(us, checksq) == Square.RANK_8) {
+                    if (Square.rank(checksq) == 0 || Square.rank(checksq) == rankCount - 1) {
                         for (int prom = PieceType.QUEEN; prom >= PieceType.KNIGHT; prom--) {
                             moves.add(Move.makePromotion(from, checksq, prom));
                         }
@@ -1181,7 +1333,7 @@ public final class Board {
                         while (ss2 != SquareSet.EMPTY) {
                             int to = SquareSet.first(ss2);
                             ss2 = SquareSet.removeFirst(ss2);
-                            if (Square.rank(to) == Square.RANK_8) {
+                            if (Square.rank(to) == rankCount - 1) {
                                 for (int prom = PieceType.QUEEN; prom >= PieceType.KNIGHT; prom--) {
                                     moves.add(Move.makePromotion(to - push, to, prom));
                                 }
@@ -1191,7 +1343,8 @@ public final class Board {
                         }
 
                         // Double pawn pushes
-                        ss2 = SquareSet.shiftN(SquareSet.shiftN(ss1) & emptySquares() & SquareSet.RANK_3_SQUARES) & blockSquares;
+                        long r3ss = SquareSet.RANK_3_SQUARES;
+                        ss2 = SquareSet.shiftN(SquareSet.shiftN(ss1) & emptySquares() & r3ss) & blockSquares;
                         while (ss2 != SquareSet.EMPTY) {
                             int to = SquareSet.first(ss2);
                             ss2 = SquareSet.removeFirst(ss2);
@@ -1215,7 +1368,11 @@ public final class Board {
                         }
 
                         // Double pawn pushes
-                        ss2 = SquareSet.shiftS(SquareSet.shiftS(ss1) & emptySquares() & SquareSet.RANK_6_SQUARES) & blockSquares;
+                        long r6ss = SquareSet.RANK_6_SQUARES;
+                        for (int i = 8; i > rankCount; i++) {
+                            r6ss = SquareSet.shiftS(r6ss);
+                        }
+                        ss2 = SquareSet.shiftS(SquareSet.shiftS(ss1) & emptySquares() & r6ss) & blockSquares;
                         while (ss2 != SquareSet.EMPTY) {
                             int to = SquareSet.first(ss2);
                             ss2 = SquareSet.removeFirst(ss2);
@@ -1296,7 +1453,9 @@ public final class Board {
         }
 
 
-        /// Test whether the Board object is internally consistent, for debugging.
+        /// Test whether the Board object is internally consistent, for debugging. Doesn't yet
+        /// work for boards with non-standard file or rank counts, boards with blockers, or
+        /// boards where kings are not special.
         public boolean isOK() {
 
             // King squares and king counts OK:
@@ -1397,9 +1556,38 @@ public final class Board {
         state = boardState;
     }
 
-    /// Factory method for generating new boards from a FEN:
+    /// Factory methods for generating new boards from a FEN:
+    static public Board boardFromFen(String fen, boolean kingIsSpecial) {
+        return new Board(new MutableBoard(fen, kingIsSpecial));
+    }
+
     static public Board boardFromFen(String fen) {
-        return new Board(new MutableBoard(fen));
+        return new Board(new MutableBoard(fen, true));
+    }
+
+    /// Factory methods for generating new boards with a file and a rank
+    /// count:
+    static public Board boardWithSize(int fileCount, int rankCount, boolean kingIsSpecial) {
+        return new Board(new MutableBoard(fileCount, rankCount, kingIsSpecial));
+    }
+
+    static public Board boardWithSize(int fileCount, int rankCount) {
+        return new Board(new MutableBoard(fileCount, rankCount, true));
+    }
+
+    /// Put a piece or a blocker on a square, and return the new board:
+    public Board putPiece(int piece, int square) {
+        MutableBoard newState = new MutableBoard(state);
+        newState.putPiece(piece, square);
+        return new Board(newState);
+    }
+
+    /// Remove the piece or blocker on the given square, and return the new
+    /// board:
+    public Board removePiece(int square) {
+        MutableBoard newState = new MutableBoard(state);
+        newState.removePiece(square);
+        return new Board(newState);
     }
 
     /// Do a move, and return the new board:
@@ -1408,6 +1596,23 @@ public final class Board {
         newState.doMove(move);
         newState.parent = this;
         return new Board(newState);
+    }
+
+    /// Do a null move, and return the new board:
+    public Board doNullMove() {
+        MutableBoard newState = new MutableBoard(state);
+        newState.doNullMove();
+        newState.parent = this;
+        return new Board(newState);
+    }
+
+    /// File and rank counts:
+    public int getFileCount() {
+        return state.getFileCount();
+    }
+
+    public int getRankCount() {
+        return state.getRankCount();
     }
 
     /// Hash key:
@@ -1467,6 +1672,11 @@ public final class Board {
     /// Square set representing all occupied squares on the board.
     public long occupiedSquares() {
         return state.occupiedSquares();
+    }
+
+    /// Square set repersenting all blocked or outside squares on the board.
+    public long blockedSquares() {
+        return state.blockedSquares();
     }
 
     /// Square set representing all empty squares on the board.

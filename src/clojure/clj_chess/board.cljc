@@ -58,9 +58,29 @@
 (defn make-board
   "Creates a new chess board from a FEN string. If no string is supplied, the
   standard initial position is used."
-  [& [fen]]
-  #?(:clj (Board/boardFromFen (or fen start-fen))
+  [& [fen allow-king-capture?]]
+  #?(:clj (Board/boardFromFen (or fen start-fen)
+                              (not allow-king-capture?))
      :cljs (.fromFEN jsc/Board (or fen start-fen))))
+
+#?(:clj
+   (defn empty-board
+     "Creates an empty board with the given number of files and ranks,
+     optionally allowing king captures."
+     [file-count rank-count & [allow-king-capture?]]
+     (Board/boardWithSize file-count rank-count (not allow-king-capture?))))
+
+#?(:clj
+   (defn put-piece
+     "Puts a piece or a blocker on a given square."
+     [board piece square]
+     (.putPiece board piece square)))
+
+#?(:clj
+   (defn remove-piece
+     "Removes the piece or blocker on the given square."
+     [board square]
+     (.removePiece board square)))
 
 (defn to-fen
   "Converts the board to a string in Forsyth-Edwards notation."

@@ -25,6 +25,7 @@ public class Piece {
     public static final int BLACK_QUEEN = Piece.make(PieceColor.BLACK, PieceType.QUEEN);
     public static final int BLACK_KING = Piece.make(PieceColor.BLACK, PieceType.KING);
     public static final int EMPTY = Piece.make(PieceColor.NONE, PieceType.NONE);
+    public static final int BLOCKER = Piece.make(PieceColor.NONE, PieceType.BLOCKER);
 
     /// Create a piece value with the given color and type:
     public static int make(int color, int type) {
@@ -91,6 +92,9 @@ public class Piece {
     /// This function is used when exporting a chess position in
     /// Forsyth-Edwards notation.
     public static char toChar(int piece) {
+        if (piece == Piece.BLOCKER) {
+            return 'x';
+        }
         int color = color(piece), type = type(piece);
         char c = PieceType.toChar(type);
         return color == PieceColor.WHITE ? Character.toUpperCase(c) : c;

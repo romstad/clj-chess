@@ -15,6 +15,7 @@ public class PieceType {
     public static final int ROOK = 4;
     public static final int QUEEN = 5;
     public static final int KING = 6;
+    public static final int BLOCKER = 7;
 
     public static final int MIN = PAWN, MAX = KING;
 
