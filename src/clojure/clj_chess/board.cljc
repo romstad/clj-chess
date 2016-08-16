@@ -41,6 +41,18 @@
   #?(:clj (Square/rank square)
      :cljs (jsc/squareRank square)))
 
+(defn square-from-string
+  "Converts a string in standard coordinate notation to a square."
+  [sq-str]
+  #?(:clj (Square/fromString sq-str)
+     :cljs (jsc/squareFromString sq-str)))
+
+(defn square-to-string
+  "Converts a square to a string in standard coordinate notation."
+  [square]
+  #?(:clj (Square/toString square)
+     :cljs (jsc/squareToString square)))
+
 (defn piece-make [color type]
   #?(:clj (Piece/make color type)
      :cljs (jsc/pieceMake color type)))
