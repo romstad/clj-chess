@@ -360,7 +360,7 @@ var zobWTM = randInt();
 
 // Constructor. Creates an empty board.
 
-chess.Board = function () {
+chess.Board = function (fileCount, rankCount) {
     this.parent = null;
     this.sideToMove = COLOR_WHITE;
     this.epSquare = SQUARE_NONE;
@@ -370,8 +370,23 @@ chess.Board = function () {
     this.lastMove = null;
     this.key = 0;
     this.board = new Array(256);
+    this.fileCount = fileCount || 8;
+    this.rankCount = rankCount || 8;
+    this.fileMax = FILE_MIN + this.fileCount - 1;
+    this.rankMax = RANK_MIN + this.rankCount - 1;
     for (var s = 0; s < 256; s++) { this.board[s] = OUTSIDE; }
     for (var i = 0; i < 64; i++) { this.board[squareExpand(i)] = EMPTY; }
+    var f, r;
+    for (f = this.fileMax + 1; f <= FILE_MAX; f++) {
+        for (r = RANK_MIN; r <= RANK_MAX; r++) {
+            this.board[squareMake(f, r)] = OUTSIDE;
+        }
+    }
+    for (f = FILE_MIN; f <= FILE_MAX; f++) {
+        for (r = this.rankMax + 1; r <= RANK_MAX; r++) {
+            this.board[squareMake(f, r)] = OUTSIDE;
+        }
+    }
     this.kingSquares = [SQUARE_NONE, SQUARE_NONE];
     this.pieceCount = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 };
@@ -393,17 +408,37 @@ Board.fromFEN = function (fen) {
 
     // Board
     s = components[0];
+    b.rankCount = s.match(/\//g).length;
+    b.fileCount = 0;
     rank = RANK_MAX;
     file = FILE_MIN;
     for (i = 0; i < s.length; i++) {
         if (isDigit(s[i])) { // Skip the given number of files
             file += s.charCodeAt(i) - "1".charCodeAt(0) + 1;
         } else if (s[i] === "/") { // Move to the next rank
+            b.fileCount = Math.max(b.fileCount, file - FILE_MIN);
             file = FILE_MIN;
             rank--;
+        } else if (s[i] === 'x') {
+            b.putPiece(OUTSIDE, squareMake(file, rank));
         } else { // Must be a piece, unless the FEN string is broken
 	          b.putPiece(pieceFromString(s[i]), squareMake(file, rank));
             file++;
+        }
+    }
+
+    this.fileMax = FILE_MIN + this.fileCount - 1;
+    this.rankMax = RANK_MIN + this.rankCount - 1;
+
+    var f, r;
+    for (f = this.fileMax + 1; f <= FILE_MAX; f++) {
+        for (r = RANK_MIN; r <= RANK_MAX; r++) {
+            this.board[squareMake(f, r)] = OUTSIDE;
+        }
+    }
+    for (f = FILE_MIN; f <= FILE_MAX; f++) {
+        for (r = this.rankMax + 1; r <= RANK_MAX; r++) {
+            this.board[squareMake(f, r)] = OUTSIDE;
         }
     }
 
@@ -465,9 +500,9 @@ Board.prototype.toFEN = function () {
     var buffer = "";
 
     // Board
-    for (var rank = RANK_MAX; rank >= RANK_MIN; rank--) {
+    for (var rank = this.rankMax; rank >= RANK_MIN; rank--) {
         var emptySquareCount = 0;
-        for (var file = FILE_MIN; file <= FILE_MAX; file++) {
+        for (var file = FILE_MIN; file <= this.fileMax; file++) {
             var piece = this.board[squareMake(file, rank)];
             if (piece === EMPTY) {
                 emptySquareCount++;
@@ -475,7 +510,11 @@ Board.prototype.toFEN = function () {
                 if (emptySquareCount > 0) {
                     buffer += emptySquareCount;
                 }
-                buffer += pieceToString(piece);
+                if (piece === OUTSIDE) {
+                    buffer += "x";
+                } else {
+                    buffer += pieceToString(piece);
+                }
                 emptySquareCount = 0;
             }
         }
@@ -531,6 +570,8 @@ Board.prototype.print = function () {
             var piece = this.board[square];
             if (piece === EMPTY) {
                 line += ((file + rank) % 2 === 0 ? "|   " : "| . ");
+            } else if (piece === OUTSIDE) {
+                line += "|###";
             } else {
                 line += pieceStrings[piece];
             }
@@ -545,6 +586,7 @@ Board.prototype.print = function () {
 // Add a piece to the given square.
 Board.prototype.putPiece = function (piece, square) {
     this.board[square] = piece;
+    if (piece === OUTSIDE) { return; }
     this.pieceCount[piece]++;
     if (pieceType(piece) === KING) {
         this.kingSquares[pieceColor(piece)] = square;
@@ -554,7 +596,9 @@ Board.prototype.putPiece = function (piece, square) {
 
 // Remove the piece on the given square.
 Board.prototype.removePiece = function (square) {
-    this.pieceCount[this.board[square]]--;
+    if (this.board[square] != OUTSIDE) {
+        this.pieceCount[this.board[square]]--;
+    }
     this.board[square] = EMPTY;
 };
 
