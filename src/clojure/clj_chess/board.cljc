@@ -260,6 +260,14 @@
   [board move]
   (.doMove board move))
 
+#?(:clj
+   (defn do-null-move
+     "Do a null move, i.e. just change the side to move without making a
+     move. This will only work if the side to move is not in check, or if
+     the board is a pseudo-chess board where king captures are allowed."
+     [board]
+     (.doNullMove board)))
+
 (defn do-uci-move
   "Do the move represented by a UCI string, and return the new board. If no
   matching move exists, returns nil."
