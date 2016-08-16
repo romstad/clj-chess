@@ -3,8 +3,29 @@
   #?(:cljs (:require [jschess.chess :as jsc])
      :clj (:import (chess Board Move PieceColor Piece Square))))
 
-(def color-white #?(:clj PieceColor/WHITE :cljs 0))
-(def color-black #?(:clj PieceColor/BLACK :cljs 1))
+(def white #?(:clj PieceColor/WHITE :cljs 0))
+(def black #?(:clj PieceColor/BLACK :cljs 1))
+
+(def pawn 1)
+(def knight 2)
+(def bishop 3)
+(def rook 4)
+(def queen 5)
+(def king 6)
+
+(def white-pawn 1)
+(def white-knight 2)
+(def white-bishop 3)
+(def white-rook 4)
+(def white-queen 5)
+(def white-king 6)
+(def black-pawn 9)
+(def black-knight 10)
+(def black-bishop 11)
+(def black-rook 12)
+(def black-queen 13)
+(def black-king 14)
+(def blocker 23)
 
 
 (defn square-make [file rank]
@@ -117,7 +138,7 @@
 (defn side-to-move
   "The current side to move, :white or :black."
   [board]
-  (if (= (.getSideToMove board) color-white)
+  (if (= (.getSideToMove board) white)
     :white
     :black))
 
@@ -375,7 +396,7 @@
     (cond
       (is-kingside-castle? move) (assoc map :rook-from (+ to 1) :rook-to (- to 1))
       (is-queenside-castle? move) (assoc map :rook-from (- to 2) :rook-to (+ to 1))
-      (move-is-ep? move) (assoc map :captured-piece (if (= stm color-white) :bp :wp)
+      (move-is-ep? move) (assoc map :captured-piece (if (= stm white) :bp :wp)
                                   :capture-square (square-make (square-file to)
                                                                (square-rank from)))
       (and (move-is-promotion? move) (not (.isEmpty board to)))
