@@ -1369,7 +1369,7 @@ public final class Board {
 
                         // Double pawn pushes
                         long r6ss = SquareSet.RANK_6_SQUARES;
-                        for (int i = 8; i > rankCount; i++) {
+                        for (int i = 8; i > rankCount; i--) {
                             r6ss = SquareSet.shiftS(r6ss);
                         }
                         ss2 = SquareSet.shiftS(SquareSet.shiftS(ss1) & emptySquares() & r6ss) & blockSquares;
