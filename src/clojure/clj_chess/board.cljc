@@ -57,6 +57,14 @@
   #?(:clj (Piece/make color type)
      :cljs (jsc/pieceMake color type)))
 
+(defn piece-type [piece]
+  #?(:clj (Piece/type piece)
+     :cljs (jsc/pieceType piece)))
+
+(defn piece-color [piece]
+  #?(:clj (Piece/color piece)
+     :cljs (jsc/pieceColor piece)))
+
 (defn move-from [move]
   #?(:clj (Move/from move)
      :cljs (jsc/moveFrom move)))

@@ -1,11 +1,19 @@
 (ns clj-chess.square-set
-  (:refer-clojure :exclude [complement empty?])
+  (:refer-clojure :exclude [complement empty? first])
   (:import (chess SquareSet)))
 
 (defn empty?
   "True if the set has no elements."
   [set]
   (zero? set))
+
+(defn first
+  [set]
+  (SquareSet/first set))
+
+(defn remove-first
+  [set]
+  (SquareSet/removeFirst set))
 
 (defn squares
   "A vector containing the members of a square set."
@@ -14,8 +22,8 @@
          set set]
     (if (empty? set)
       result
-      (recur (conj result (SquareSet/first set))
-             (SquareSet/removeFirst set)))))
+      (recur (conj result (first set))
+             (remove-first set)))))
 
 (defn intersection
   "The intersection of one or more square sets, i.e. the set of all squares
