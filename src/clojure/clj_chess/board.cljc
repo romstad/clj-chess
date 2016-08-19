@@ -53,15 +53,21 @@
   #?(:clj (Square/toString square)
      :cljs (jsc/squareToString square)))
 
-(defn piece-make [color type]
+(defn piece-make
+  "Returns a piece with a given color and type."
+  [color type]
   #?(:clj (Piece/make color type)
      :cljs (jsc/pieceMake color type)))
 
-(defn piece-type [piece]
+(defn piece-type
+  "Returns the type of a piece (pawn, knight, bishop, etc.)."
+  [piece]
   #?(:clj (Piece/type piece)
      :cljs (jsc/pieceType piece)))
 
-(defn piece-color [piece]
+(defn piece-color
+  "Returns the color of a piece (white or black)."
+  [piece]
   #?(:clj (Piece/color piece)
      :cljs (jsc/pieceColor piece)))
 
