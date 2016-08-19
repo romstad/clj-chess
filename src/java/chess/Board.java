@@ -1822,6 +1822,26 @@ public final class Board {
         return state.attacksTo(square, color);
     }
 
+    /// The set of squares attacked by the piece on the given square.
+    public long attacksFrom(int square) {
+        int pieceType = Piece.type(pieceOn(square));
+        if (pieceType == PieceType.PAWN) {
+            return pawnAttacks(Piece.color(pieceOn(square)), square);
+        } else if (pieceType == PieceType.KNIGHT) {
+            return knightAttacks(square);
+        } else if (pieceType == PieceType.BISHOP) {
+            return bishopAttacks(square);
+        } else if (pieceType == PieceType.ROOK) {
+            return rookAttacks(square);
+        } else if (pieceType == PieceType.QUEEN) {
+            return queenAttacks(square);
+        } else if (pieceType == PieceType.KING) {
+            return kingAttacks(square);
+        } else {
+            return 0;
+        }
+    }
+
     /// The set of squares containing pinned pieces of the given color.
     public long pinnedPieces(int color) {
         return state.pinnedPieces(color);
