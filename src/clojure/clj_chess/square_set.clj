@@ -1,13 +1,18 @@
 (ns clj-chess.square-set
-  (:refer-clojure :exclude [complement])
+  (:refer-clojure :exclude [complement empty?])
   (:import (chess SquareSet)))
+
+(defn empty?
+  "True if the set has no elements."
+  [set]
+  (zero? set))
 
 (defn squares
   "A vector containing the members of a square set."
   [set]
   (loop [result []
          set set]
-    (if (zero? set)
+    (if (empty? set)
       result
       (recur (conj result (SquareSet/first set))
              (SquareSet/removeFirst set)))))

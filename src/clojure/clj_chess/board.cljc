@@ -517,6 +517,58 @@
      (.see board move)))
 
 #?(:clj
+   (defn attacks-from
+     "The set of squares attacked by the piece on the given square."
+     [board square]
+     (.attacksFrom board square))
+
+   (defn attacks-to
+     "The set of squares containing pieces that attack the given square.
+     If the third, optional argument 'color' is supplied, only attackers
+     of that color are included."
+     ([board square color]
+      (.attacksTo board square color))
+     ([board square]
+       (bit-or (.attacksTo board square 0)
+               (.attacksTo board square 1))))
+
+   (defn pawn-attacks
+     "The set of squares that would be attacked by a pawn of the given color
+     from the given square."
+     [board color square]
+     (.pawnAttacks board color square))
+
+   (defn knight-attacks
+     "The set of squares that would be attacked by a knight on the given
+     square."
+     [board square]
+     (.knightAttacks board square))
+
+   (defn bishop-attacks
+     "The set of squares that would be attacked by a bishop on the given
+     square."
+     [board square]
+     (.bishopAttacks board square))
+
+   (defn rook-attacks
+     "The set of squares that would be attacked by a rook on the given
+     square."
+     [board square]
+     (.rookAttacks board square))
+
+   (defn queen-attacks
+     "The set of squares that would be attacked by a queen on the given
+     square."
+     [board square]
+     (.queenAttacks board square))
+
+   (defn king-attacks
+     "The set of squares that would be attacked by a king on the given
+     square."
+     [board square]
+     (.kingAttacks board square)))
+
+#?(:clj
    (defn flip
      "Returns a flipped copy of a board, with the black and white pieces,
      the side to move, the castle rights and the en passant capture square
