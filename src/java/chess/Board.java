@@ -543,11 +543,23 @@ public final class Board {
         }
 
 
-        /// Generate a list of all legal moves from the given squares.
+        /// Generate a list of all legal moves from the given square.
         public List<Integer> movesFrom(int square) {
             List<Integer>result = new ArrayList<Integer>();
             for (int move : generateMoves()) {
                 if (Move.from(move) == square && moveIsLegal(move)) {
+                    result.add(move);
+                }
+            }
+            return result;
+        }
+
+
+        /// Generate a list of all legal moves to the given square.
+        public List<Integer> movesTo(int square) {
+            List<Integer>result = new ArrayList<>();
+            for (int move: generateMoves()) {
+                if (Move.to(move) == square && moveIsLegal(move)) {
                     result.add(move);
                 }
             }
@@ -1877,9 +1889,15 @@ public final class Board {
     }
 
 
-    /// Generate a list of all legal moves from the given squares.
+    /// Generate a list of all legal moves from the given square.
     public List<Integer>movesFrom(int square) {
         return state.movesFrom(square);
+    }
+
+
+    /// Generate a list of all legal moves to the given square.
+    public List<Integer>movesTo(int square) {
+        return state.movesTo(square);
     }
 
 

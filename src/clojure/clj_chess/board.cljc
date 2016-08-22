@@ -251,6 +251,16 @@
   [board]
   (vec (.moves board)))
 
+(defn moves-from
+  "Returns the legal moves from the given square."
+  [board square]
+  (vec (.movesFrom board square)))
+
+(defn moves-to
+  "Returns the legal moves to the given square."
+  [board square]
+  (vec (.movesTo board square)))
+
 (defn move-to-uci
   "Translates a move to a string in UCI notation."
   [move]
