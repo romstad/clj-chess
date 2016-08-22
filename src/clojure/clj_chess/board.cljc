@@ -531,6 +531,44 @@
      (.see board move)))
 
 #?(:clj
+
+   (defn occupied-squares
+     "The set of occupied squares on the board, including blockers. Supplying
+     the optional 'color' parameter will result in only squares occupied by
+     pieces of that color (and no blockers) to be returned."
+     ([board] (.occupiedSquares board))
+     ([board color] (.piecesOfColor board color)))
+
+   (defn pawn-squares
+     "The set of squares containing pawns of the given color."
+     [board color]
+     (.pawnsOfColor board color))
+
+   (defn knight-squares
+     "The set of squares containing knights of the given color."
+     [board color]
+     (.knightsOfColor board color))
+
+   (defn bishop-squares
+     "The set of squares containing bishops of the given color."
+     [board color]
+     (.bishopsOfColor board color))
+
+   (defn rook-squares
+     "The set of squares containing rooks of the given color."
+     [board color]
+     (.rooksOfColor board color))
+
+   (defn queen-squares
+     "The set of squares containing queens of the given color."
+     [board color]
+     (.queensOfColor board color))
+
+   (defn king-squares
+     "The set of squares containing kings of the given color."
+     [board color]
+     (.kingsOfColor board color))
+
    (defn attacks-from
      "The set of squares attacked by the piece on the given square."
      [board square]
