@@ -541,49 +541,56 @@
      (.see board move)))
 
 #?(:clj
-
    (defn occupied-squares
      "The set of occupied squares on the board, including blockers. Supplying
      the optional 'color' parameter will result in only squares occupied by
      pieces of that color (and no blockers) to be returned."
      ([board] (.occupiedSquares board))
-     ([board color] (.piecesOfColor board color)))
+     ([board color] (.piecesOfColor board color))))
 
+#?(:clj
    (defn pawn-squares
      "The set of squares containing pawns of the given color."
      [board color]
-     (.pawnsOfColor board color))
+     (.pawnsOfColor board color)))
 
+#?(:clj
    (defn knight-squares
      "The set of squares containing knights of the given color."
      [board color]
-     (.knightsOfColor board color))
+     (.knightsOfColor board color)))
 
+#?(:clj
    (defn bishop-squares
      "The set of squares containing bishops of the given color."
      [board color]
-     (.bishopsOfColor board color))
+     (.bishopsOfColor board color)))
 
+#?(:clj
    (defn rook-squares
      "The set of squares containing rooks of the given color."
      [board color]
-     (.rooksOfColor board color))
+     (.rooksOfColor board color)))
 
+#?(:clj
    (defn queen-squares
      "The set of squares containing queens of the given color."
      [board color]
-     (.queensOfColor board color))
+     (.queensOfColor board color)))
 
+#?(:clj
    (defn king-squares
      "The set of squares containing kings of the given color."
      [board color]
-     (.kingsOfColor board color))
+     (.kingsOfColor board color)))
 
+#?(:clj
    (defn attacks-from
      "The set of squares attacked by the piece on the given square."
      [board square]
-     (.attacksFrom board square))
+     (.attacksFrom board square)))
 
+#?(:clj
    (defn attacks-to
      "The set of squares containing pieces that attack the given square.
      If the third, optional argument 'color' is supplied, only attackers
@@ -591,39 +598,45 @@
      ([board square color]
       (.attacksTo board square color))
      ([board square]
-       (bit-or (.attacksTo board square 0)
-               (.attacksTo board square 1))))
+      (bit-or (.attacksTo board square 0)
+              (.attacksTo board square 1)))))
 
+#?(:clj
    (defn pawn-attacks
      "The set of squares that would be attacked by a pawn of the given color
      from the given square."
      [board color square]
-     (.pawnAttacks board color square))
+     (.pawnAttacks board color square)))
 
+#?(:clj
    (defn knight-attacks
      "The set of squares that would be attacked by a knight on the given
      square."
      [board square]
-     (.knightAttacks board square))
+     (.knightAttacks board square)))
 
+#?(:clj
    (defn bishop-attacks
      "The set of squares that would be attacked by a bishop on the given
      square."
      [board square]
-     (.bishopAttacks board square))
+     (.bishopAttacks board square)))
 
+#?(:clj
    (defn rook-attacks
      "The set of squares that would be attacked by a rook on the given
      square."
      [board square]
-     (.rookAttacks board square))
+     (.rookAttacks board square)))
 
+#?(:clj
    (defn queen-attacks
      "The set of squares that would be attacked by a queen on the given
      square."
      [board square]
-     (.queenAttacks board square))
+     (.queenAttacks board square)))
 
+#?(:clj
    (defn king-attacks
      "The set of squares that would be attacked by a king on the given
      square."
