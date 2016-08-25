@@ -19,7 +19,8 @@
 
 (defn analyse-board [engine board & {depth :depth time :time nodes :nodes
                                      finish-iteration? :finish-iteration?
-                                     search-moves :search-moves}]
+                                     search-moves :search-moves
+                                     log-output :log-output}]
   (if-not (= 1 (count (keep identity [depth time nodes])))
     (throw (Exception. "Exactly one of :depth, :time and :nodes must be supplied"))
     (let [command (go-command depth time nodes finish-iteration? search-moves)
@@ -42,7 +43,8 @@
                        (> (:depth parsed-line)
                           (:depth pv)))
               (uci/send-command engine "stop"))
-            (when parsed-line (prn parsed-line))
+            (when (and parsed-line log-output)
+              (prn parsed-line))
             (recur (<!! engine-output)
                    (if pv?
                      parsed-line
