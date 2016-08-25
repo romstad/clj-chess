@@ -71,7 +71,7 @@
 (defn parse-uci-output
   "Parse an output line from a UCI chess engine."
   [output]
-  (let [p (uci-info-parser output)]
+  (let [p (uci-info-parser (str/trim output))]
     (when-not (ip/failure? p)
       (second (ip/transform uci-transform-options p)))))
 
