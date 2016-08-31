@@ -766,7 +766,7 @@ Board.prototype.findCheckers = function () {
 
     var move = this.lastMove;
 
-    if (move === undefined || moveIsCastle(move) || moveIsEP(move)) {
+    if (move === undefined || move === null || moveIsCastle(move) || moveIsEP(move)) {
         return this.slowFindCheckers();
     }
 
