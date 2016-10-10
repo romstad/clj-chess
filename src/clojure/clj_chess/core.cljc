@@ -105,8 +105,8 @@
 (defn make-board
   "Creates a new chess board from a FEN string. If no FEN is supplied, the
   standard initial position is used."
-  [& [fen]]
-  (b/make-board fen))
+  [& [fen allow-king-capture?]]
+  (b/make-board fen allow-king-capture?))
 
 #?(:clj
    (defn flip-board
