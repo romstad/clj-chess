@@ -650,3 +650,14 @@
      flipped."
      [board]
      (.flip board)))
+
+#?(:clj
+   (defn pattern-key
+     "Creates a hash key for a given rectangular area of the board, either
+     for both colors (if the optional 'color' parameter is ommited) or just
+     for one color, ignoring the pieces of the other color, if the 'color'
+     parameter is supplied."
+     [board file-min file-max rank-min rank-max & [color]]
+     (if color
+       (.patternKey board file-min file-max rank-min rank-max color)
+       (.patternKey board file-min file-max rank-min rank-max))))

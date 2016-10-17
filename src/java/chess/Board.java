@@ -2301,6 +2301,31 @@ public final class Board {
         return new Board(st);
     }
 
+
+    public long patternKey(int fileMin, int fileMax, int rankMin, int rankMax,
+                           int color) {
+        long result = 0;
+        long occ = occupiedSquares() & ~blockedSquares();
+
+        while (occ != SquareSet.EMPTY) {
+            int square = SquareSet.first(occ);
+            int file = Square.file(square), rank = Square.rank(square);
+            occ = SquareSet.removeFirst(occ);
+            if (file >= fileMin && file <= fileMax
+                    && rank >= rankMin && rank <= rankMax) {
+                if (color == PieceColor.NONE || color == Piece.color(pieceOn(square))) {
+                    result ^= zobrist[pieceOn(square) * 64 + square];
+                }
+            }
+        }
+        return result;
+    }
+
+
+    public long patternKey(int fileMin, int fileMax, int rankMin, int rankMax) {
+        return patternKey(fileMin, fileMax, rankMin, rankMax, PieceColor.NONE);
+    }
+
     static long[] zobrist = new long[2 * 8 * 64];
     static long[] zobEP = new long[64];
     static long[] zobCastle = new long[16];
