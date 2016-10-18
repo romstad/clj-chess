@@ -153,6 +153,8 @@
   [board]
   (.isMate board))
 
+(declare do-move)
+
 (defn move-is-checkmate?
   "Tests whether the move is a mate in one."
   [board move]
