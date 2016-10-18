@@ -1,5 +1,5 @@
 (ns clj-chess.square-set
-  (:refer-clojure :exclude [complement contains? empty? first remove])
+  (:refer-clojure :exclude [complement contains? count empty? first remove])
   (:import (chess SquareSet)))
 
 (defn square-set
@@ -90,6 +90,11 @@
   unchanged."
   [set square]
   (intersection set (complement (square-set square))))
+
+(defn count
+  "The number of elements of the square set."
+  [set]
+  (SquareSet/count set))
 
 (defn pprint
   "Pretty-print a square set to the standard output, for debugging."

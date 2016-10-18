@@ -585,6 +585,12 @@
      (.kingsOfColor board color)))
 
 #?(:clj
+   (defn king-square
+     "The square of the king for the given color."
+     [board color]
+     (.kingSquare board color)))
+
+#?(:clj
    (defn attacks-from
      "The set of squares attacked by the piece on the given square."
      [board square]
@@ -600,6 +606,10 @@
      ([board square]
       (bit-or (.attacksTo board square 0)
               (.attacksTo board square 1)))))
+
+#?(:clj
+   (defn attacked? [board square color]
+     (.isAttacked board square color)))
 
 #?(:clj
    (defn pawn-attacks

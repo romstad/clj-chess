@@ -1591,6 +1591,7 @@ public final class Board {
     public Board putPiece(int piece, int square) {
         MutableBoard newState = new MutableBoard(state);
         newState.putPiece(piece, square);
+        newState.initialize();
         return new Board(newState);
     }
 
@@ -1599,6 +1600,7 @@ public final class Board {
     public Board removePiece(int square) {
         MutableBoard newState = new MutableBoard(state);
         newState.removePiece(square);
+        newState.initialize();
         return new Board(newState);
     }
 
