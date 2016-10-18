@@ -153,6 +153,11 @@
   [board]
   (.isMate board))
 
+(defn move-is-checkmate?
+  "Tests whether the move is a mate in one."
+  [board move]
+  (checkmate? (do-move board move)))
+
 (defn immediate-draw?
   "Tests whether the board position is an immediate draw."
   [board]
@@ -547,6 +552,11 @@
      pieces of that color (and no blockers) to be returned."
      ([board] (.occupiedSquares board))
      ([board color] (.piecesOfColor board color))))
+
+#?(:clj
+   (defn empty-squares
+     "The set of all empty squares on the board."
+     [board] (.emptySquares board)))
 
 #?(:clj
    (defn pawn-squares
