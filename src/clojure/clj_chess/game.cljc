@@ -724,51 +724,51 @@
     (node-to-string (:root-node game))))
 
 (defn- ecn-move-text [game & {:keys [include-comments? include-variations?
-                                     binary?]
-                              :or {:include-comments? true
-                                   :include-variations? true}}]
-  (if binary?
-    [:byte-moves #?(:clj (byte-array (map (fn [[b m]] (board/move-to-byte b m))
-                                          (boards-with-moves game)))
-                    :cljs (throw
-                            (js/Error
-                              "Binary move encoding is not supported in cljs")))]
-    (letfn [(node-to-ecn [node]
-              (let [board (:board node)
-                    children (:children node)]
-                (when-not (empty? children)
-                  (filterv
-                    identity
-                    `[; Pre-comment for first child move
-                      ~(when include-comments?
-                         (when-let [c (:pre-comment (first children))]
-                           [:pre-comment c]))
-                      ; String representation of first child move (main variation):
-                      ~(-> (first children) :board board/last-move
-                           board/move-to-uci)
-                      ; Comment for first child move:
-                      ~(when include-comments?
-                         (when-let [c (:comment (first children))]
-                           [:comment c]))
-                      ; Recursive annotation variations for younger children:
-                      ~@(when include-variations?
-                          (mapv (fn [child]
-                                  (let [m (-> child :board board/last-move)]
-                                    (filterv
-                                      identity
-                                      `[:variation
-                                        ~(when include-comments?
-                                           (when-let [c (:pre-comment child)]
-                                             [:pre-comment c]))
-                                        ~(board/move-to-uci m)
-                                        ~(when include-comments?
-                                           (when-let [c (:comment child)]
-                                             [:comment c]))
-                                        ~@(node-to-ecn child)])))
-                                (rest children)))
-                      ; Game continuation after first child move:
-                      ~@(node-to-ecn (first children))]))))]
-      `[:moves ~@(node-to-ecn (:root-node game))])))
+                                     binary?]}]
+  (let [include-comments? (or include-comments? true)
+        include-variations? (or include-variations? true)]
+    (if binary?
+      [:byte-moves #?(:clj  (byte-array (map (fn [[b m]] (board/move-to-byte b m))
+                                             (boards-with-moves game)))
+                      :cljs (throw
+                              (js/Error
+                                "Binary move encoding is not supported in cljs")))]
+      (letfn [(node-to-ecn [node]
+                (let [board (:board node)
+                      children (:children node)]
+                  (when-not (empty? children)
+                    (filterv
+                      identity
+                      `[; Pre-comment for first child move
+                        ~(when include-comments?
+                           (when-let [c (:pre-comment (first children))]
+                             [:pre-comment c]))
+                        ; String representation of first child move (main variation):
+                        ~(-> (first children) :board board/last-move
+                             board/move-to-uci)
+                        ; Comment for first child move:
+                        ~(when include-comments?
+                           (when-let [c (:comment (first children))]
+                             [:comment c]))
+                        ; Recursive annotation variations for younger children:
+                        ~@(when include-variations?
+                            (mapv (fn [child]
+                                    (let [m (-> child :board board/last-move)]
+                                      (filterv
+                                        identity
+                                        `[:variation
+                                          ~(when include-comments?
+                                             (when-let [c (:pre-comment child)]
+                                               [:pre-comment c]))
+                                          ~(board/move-to-uci m)
+                                          ~(when include-comments?
+                                             (when-let [c (:comment child)]
+                                               [:comment c]))
+                                          ~@(node-to-ecn child)])))
+                                  (rest children)))
+                        ; Game continuation after first child move:
+                        ~@(node-to-ecn (first children))]))))]
+        `[:moves ~@(node-to-ecn (:root-node game))]))))
 
 
 (defn- wrap [text column]
