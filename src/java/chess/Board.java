@@ -1224,27 +1224,44 @@ public final class Board {
         /// Generate all pseudo-legal king moves, and add them to the supplied
         /// list.
         private void generateKingMoves(List<Integer> moves) {
-            int us = sideToMove, them = PieceColor.opposite(us);
-            int from = kingSquare(us);
-            long target = ~piecesOfColor(us) & ~blockedSquares();
-            long ss;
+            if (kingIsSpecial) {
+                int us = sideToMove, them = PieceColor.opposite(us);
+                int from = kingSquare(us);
+                long target = ~piecesOfColor(us) & ~blockedSquares();
+                long ss;
 
-            ss = kingAttacks(from) & target;
-            while (ss != SquareSet.EMPTY) {
-                int to = SquareSet.first(ss);
-                ss = SquareSet.removeFirst(ss);
-                moves.add(Move.make(from, to));
-            }
+                ss = kingAttacks(from) & target;
+                while (ss != SquareSet.EMPTY) {
+                    int to = SquareSet.first(ss);
+                    ss = SquareSet.removeFirst(ss);
+                    moves.add(Move.make(from, to));
+                }
 
-            // Castling
-            if (canCastleKingside(us) && isEmpty(from + 1) && isEmpty(from + 2)
-                    && !isAttacked(from, them) && !isAttacked(from + 1, them) && !isAttacked(from + 2, them)) {
-                moves.add(Move.makeCastle(from, from + 2));
-            }
+                // Castling
+                if (canCastleKingside(us) && isEmpty(from + 1) && isEmpty(from + 2)
+                        && !isAttacked(from, them) && !isAttacked(from + 1, them) && !isAttacked(from + 2, them)) {
+                    moves.add(Move.makeCastle(from, from + 2));
+                }
 
-            if (canCastleQueenside(us) && isEmpty(from - 1) && isEmpty(from - 2) && isEmpty(from - 3)
-                    && !isAttacked(from, them) && !isAttacked(from - 1, them) && !isAttacked(from - 2, them)) {
-                moves.add(Move.makeCastle(from, from - 2));
+                if (canCastleQueenside(us) && isEmpty(from - 1) && isEmpty(from - 2) && isEmpty(from - 3)
+                        && !isAttacked(from, them) && !isAttacked(from - 1, them) && !isAttacked(from - 2, them)) {
+                    moves.add(Move.makeCastle(from, from - 2));
+                }
+            } else {
+                long source = kingsOfColor(sideToMove);
+                long target = ~piecesOfColor(sideToMove) & ~blockedSquares();
+                long ss;
+
+                while (source != SquareSet.EMPTY) {
+                    int from = SquareSet.first(source);
+                    source = SquareSet.removeFirst(source);
+                    ss = target & kingAttacks(from);
+                    while (ss != SquareSet.EMPTY) {
+                        int to = SquareSet.first(ss);
+                        ss = SquareSet.removeFirst(ss);
+                        moves.add(Move.make(from, to));
+                    }
+                }
             }
         }
 
