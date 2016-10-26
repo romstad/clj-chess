@@ -131,6 +131,22 @@
      [board square]
      (.removePiece board square)))
 
+#?(:clj
+   (defn enable-king-capture
+     "Returns an identical board, except that king captures are allowed."
+     [board]
+     (.setKingIsSpecial board false)))
+
+#?(:clj
+   (defn disable-king-capture
+     "Returns an identical board, except that king captures are not allowed."
+     [board]
+     (.setKingIsSpecial board true)))
+
+#?(:clj
+   (defn king-capture-allowed? [board]
+     (not (.getKingIsSpecial board))))
+
 (defn to-fen
   "Converts the board to a string in Forsyth-Edwards notation."
   [board]

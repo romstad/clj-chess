@@ -199,6 +199,16 @@ public final class Board {
         }
 
 
+        public void setKingIsSpecial(boolean newValue) {
+            kingIsSpecial = newValue;
+        }
+
+
+        public boolean getKingIsSpecial() {
+            return kingIsSpecial;
+        }
+
+
         /// Get the current hash key.
         public long getKey() {
             return key;
@@ -1603,6 +1613,18 @@ public final class Board {
     static public Board boardWithSize(int fileCount, int rankCount) {
         return new Board(new MutableBoard(fileCount, rankCount, false));
     }
+
+    public Board setKingIsSpecial(boolean newValue) {
+        MutableBoard newState = new MutableBoard(state);
+        newState.setKingIsSpecial(newValue);
+        return new Board(newState);
+    }
+
+
+    public boolean getKingIsSpecial() {
+        return state.getKingIsSpecial();
+    }
+
 
     /// Put a piece or a blocker on a square, and return the new board:
     public Board putPiece(int piece, int square) {
