@@ -236,7 +236,7 @@
      a board and a piece as input, and a three-argument version taking a board,
      a color and a piece type."
      ([board piece] (.pieceCount board piece))
-     ([board type color] (.pieceCount board type color))))
+     ([board color type] (.pieceCount board color type))))
 
 (defn parent
   "The parent board of the current board (i.e. the board as it was before the
