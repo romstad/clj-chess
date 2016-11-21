@@ -127,10 +127,8 @@
   (BookEntry.
     (:key (first book-entries))
     (:move (first book-entries))
-    (/ (reduce + (map :elo book-entries))
-       (max 1 (count (remove #{0} (map :elo book-entries)))))
-    (/ (reduce + (map :opponent-elo book-entries))
-       (max 1 (count (remove #{0} (map :opponent-elo book-entries)))))
+    (reduce max (map :elo book-entries))
+    (reduce max (map :opponent-elo book-entries))
     (reduce + (map :wins book-entries))
     (reduce + (map :draws book-entries))
     (reduce + (map :losses book-entries))
