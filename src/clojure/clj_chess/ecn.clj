@@ -14,7 +14,7 @@
 (defn edn-seq
   "A lazy sequence of EDN objects in from the provided reader."
   [rdr]
-  (when-let [game (edn/read rdr)]
+  (when-let [game (edn/read {:eof nil} rdr)]
     (cons game (lazy-seq (edn-seq rdr)))))
 
 (defn game-headers
