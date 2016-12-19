@@ -147,6 +147,16 @@
   [board]
   (b/print-board board))
 
+(defn file-count
+  "The number of files on a chess board (usually 8)"
+  [board]
+  (b/file-count board))
+
+(defn rank-count
+  "The number of ranks on a chess board (usually 8)"
+  [board]
+  (b/rank-count board))
+
 (defn board-side-to-move
   "The current side to move, :white or :black."
   [board]

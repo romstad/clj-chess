@@ -193,6 +193,18 @@
     :white
     :black))
 
+(defn file-count
+  "Number of files on the board."
+  [board]
+  #?(:clj (.getFileCount board)
+     :cljs (.-fileCount board)))
+
+(defn rank-count
+  "Number of ranks on the board."
+  [board]
+  #?(:clj (.getRankCount board)
+     :cljs (.-rankCount board)))
+
 (defn piece-on
   "The piece on a given square."
   [board square]
