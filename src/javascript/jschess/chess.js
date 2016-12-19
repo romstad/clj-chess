@@ -408,7 +408,7 @@ Board.fromFEN = function (fen) {
 
     // Board
     s = components[0];
-    b.rankCount = s.match(/\//g).length;
+    b.rankCount = s.match(/\//g).length + 1;
     b.fileCount = 0;
     rank = RANK_MAX;
     file = FILE_MIN;
