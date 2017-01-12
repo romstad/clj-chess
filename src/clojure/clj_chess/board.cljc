@@ -147,6 +147,15 @@
    (defn king-capture-allowed? [board]
      (not (.getKingIsSpecial board))))
 
+(defn equal?
+  "Tests whether two or more boards are equal."
+  ([board-1 board-2]
+    #?(:clj (= (.getKey board-1) (.getKey board-2))
+       :cljs (= (.-key board-1) (.-key board-2))))
+  ([board-1 board-2 & rest]
+   (and (equal? board-1 board-2)
+        (every? #(equal? % board-1) rest))))
+
 (defn to-fen
   "Converts the board to a string in Forsyth-Edwards notation."
   [board]

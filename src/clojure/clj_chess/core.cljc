@@ -320,6 +320,11 @@
   [board]
   (b/moves board))
 
+(defn board-equal?
+  "Tests whether two or more boards are equal."
+  [board-1 board-2 & boards]
+  (apply b/equal? board-1 board-2 boards))
+
 (defn move-to-uci
   "Translates a move to a string in UCI notation."
   [move]
