@@ -40,6 +40,9 @@
                      ["White" white]
                      ["Black" black]
                      ["Result" result]]
+                    (when start-fen
+                      [["SetUp" "1"]
+                       ["FEN" start-fen]])
                     other-tags)
       :root-node root-node
       :current-node root-node}))

@@ -147,3 +147,17 @@
     (pgn-token-seq
       #?(:clj (PGNReader. (PushbackReader. (StringReader. pgn-string)))
          :cljs (pgn/PGNReader. pgn-string)))))
+
+(defn shift-san-move-left [san-move-string]
+  (let [translate {\b \a, \c \b, \d \c, \e \d, \f \e, \g \f, \h \g}]
+    (apply str
+           (map (fn [c] (get translate c c))
+                san-move-string))))
+
+(defn shift-moves-left [pgn-file-name]
+  (let [games (games-in-file pgn-file-name)]
+    (map (fn [g]
+           [(first g) (second g)
+            [:moves (map shift-san-move-left
+                         (rest (nth g 2)))]])
+         games)))
