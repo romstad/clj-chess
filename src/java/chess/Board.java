@@ -441,7 +441,8 @@ public final class Board {
             return (pawnAttacks(PieceColor.opposite(color), square) & pawnsOfColor(color))
                     | (knightAttacks(square) & knightsOfColor(color))
                     | (bishopAttacks(square) & (bishopsOfColor(color) | queensOfColor(color)))
-                    | (rookAttacks(square) & (rooksOfColor(color) | queensOfColor(color)));
+                    | (rookAttacks(square) & (rooksOfColor(color) | queensOfColor(color)))
+                    | (kingAttacks(square) & (kingsOfColor(color)));
         }
 
         /// The set of squares containing pinned pieces of the given color.
