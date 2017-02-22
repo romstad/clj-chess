@@ -59,9 +59,10 @@
   [game]
   (tag-value game "Event"))
 
-(defn date [game]
+(defn date
   "The date the game was played, as a joda.time.DateTime object in Clojure,
   and a string in ClojureScript."
+  [game]
   (when-let [d (tag-value game "Date")]
     #?(:cljs d)
     #?(:clj
@@ -69,37 +70,44 @@
          (time-format/parse (time-format/formatter "YYYY.MM.dd") d)
          (catch Exception _)))))
 
-(defn round [game]
+(defn round
   "The tournament round of the game."
+  [game]
   (tag-value game "Round"))
 
-(defn site [game]
+(defn site
   "The site of the game."
+  [game]
   (tag-value game "Site"))
 
-(defn white-player [game]
+(defn white-player
   "Name of the white player."
+  [game]
   (tag-value game "White"))
 
-(defn black-player [game]
+(defn black-player
   "Name of the black player."
+  [game]
   (tag-value game "Black"))
 
-(defn result [game]
+(defn result
   "The result of the game. Should be one of the strings \"1-0\", \"0-1\",
   \"1/2-1/2\" and \"*\"."
+  [game]
   (tag-value game "Result"))
 
-(defn white-elo [game]
+(defn white-elo
   "The Elo of the white player (as an integer), or nil."
+  [game]
   (when-let [elo (tag-value game "WhiteElo")]
     (try
       (read-string elo)
       #?(:clj (catch Exception _)
          :cljs (catch js/Error _)))))
 
-(defn black-elo [game]
+(defn black-elo
   "The Elo of the black player (as an integer), or nil."
+  [game]
   (when-let [elo (tag-value game "BlackElo")]
     (try
       (read-string elo)
