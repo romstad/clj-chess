@@ -127,6 +127,10 @@ public final class Board {
             // En passant square
             if (components.length > 3 && !components[3].equals("-")) {
                 epSquare = Square.fromString(components[3]);
+                if ((SquareSet.pawnAttacks(PieceColor.opposite(sideToMove), epSquare)
+                        & pawnsOfColor(sideToMove)) == 0) {
+                    epSquare = Square.NONE;
+                }
             }
 
             initialize();
@@ -864,11 +868,14 @@ public final class Board {
             }
 
             // En passant square
-            if (epSquare == Square.NONE) {
-                buffer.append("- ");
-            } else {
-                buffer.append(Square.toString(epSquare));
+            int mv = getLastMove(), from = Move.from(mv), to = Move.to(mv);
+            if (mv != Move.NONE
+                    && Piece.type(pieceOn(to)) == PieceType.PAWN
+                    && Math.abs(to - from) == 2 * Square.pawnPush(PieceColor.WHITE)) {
+                buffer.append(Square.toString((to + from) / 2));
                 buffer.append(' ');
+            } else {
+                buffer.append("- ");
             }
 
             // Halfmove clock
