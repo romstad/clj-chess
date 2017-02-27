@@ -1,4 +1,4 @@
-(defproject clj-chess "0.4.0-SNAPSHOT"
+(defproject clj-chess "0.4.0"
   :description "A library of utilities for writing chess related applications."
   :url "http://github.com/romstad/clj-chess"
   :license {:name "Eclipse Public License"
