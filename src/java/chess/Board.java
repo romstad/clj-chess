@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.random.MersenneTwister;
 
@@ -130,6 +131,20 @@ public final class Board {
                 if ((SquareSet.pawnAttacks(PieceColor.opposite(sideToMove), epSquare)
                         & pawnsOfColor(sideToMove)) == 0) {
                     epSquare = Square.NONE;
+                }
+            }
+
+            // Halfmove clock
+            if (components.length > 4) {
+                rule50Counter = NumberUtils.toInt(components[4]);
+            }
+
+            // Move number
+            if (components.length > 5) {
+                int fullMove = NumberUtils.toInt(components[5]);
+                gamePly = (fullMove - 1) * 2;
+                if (sideToMove == PieceColor.BLACK) {
+                    gamePly += 1;
                 }
             }
 

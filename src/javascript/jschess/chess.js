@@ -466,6 +466,19 @@ Board.fromFEN = function (fen) {
         b.epSquare = squareFromString(components[3]);
     }
 
+    // Halfmove clock
+    if (components.length > 4) {
+        b.rule50Counter = parseInt(components[4]);
+    }
+
+    // Halfmove clock
+    if (components.length > 5) {
+        b.gamePly = (parseInt(components[5]) - 1) * 2;
+        if (b.sideToMove == COLOR_BLACK) {
+            b.gamePly += 1;
+        }
+    }
+
     b.findCheckers();
 
     // Zobrist key
