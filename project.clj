@@ -15,4 +15,26 @@
                  [me.raynes/conch "0.8.0"]
                  [clj-time "0.13.0"]
                  [org.apache.commons/commons-math3 "3.6.1"]
-                 [org.apache.commons/commons-lang3 "3.5"]])
+                 [org.apache.commons/commons-lang3 "3.5"]]
+
+  :profiles {:dev
+             {:dependencies [[lein-doo "0.1.7"]]
+
+              :plugins      [[lein-figwheel "0.5.9"]
+                             [lein-doo "0.1.7"]]
+              }}
+
+  :plugins [[lein-cljsbuild "1.1.5"]]
+
+  :cljsbuild
+  {:builds [{:id "test"
+             :source-paths ["src/clojure" "test" "target/classes"]
+             :compiler {:output-to "target/js/testable.js"
+                        :main clj-chess.test-runner
+                        :optimizations :none}}
+            {:id "node-test"
+             :source-paths ["src/clojure" "test" "target/classes"]
+             :compiler {:output-to "target/nodejs/testable.js"
+                        :main clj-chess.test-runner
+                        :optimizations :none
+                        :target :nodejs}}]})
