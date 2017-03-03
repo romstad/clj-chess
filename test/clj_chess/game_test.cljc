@@ -2,7 +2,7 @@
   #?(:cljs (:require-macros [cljs.test :refer (is deftest testing)]))
   (:require #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test])
-            [clj-chess.board :refer [to-fen start-fen #?(:clj perft)]]
+            [clj-chess.board :refer [to-fen start-fen perft]]
             [clj-chess.game :refer [new-game board remove-tag set-tag tag-value add-san-move add-san-move-sequence step-back move-tree remove-node take-back move-text to-end remove-children promote-node promote-node-to-main-line from-pgn to-pgn to-ecn from-ecn]]
             [clj-chess.pgn :refer [parse-pgn]]))
 
@@ -624,20 +624,19 @@ Qg1+. Topalov resigned and this wonderful game was over.} 1-0")
 
 ;; Make sure we get the same perft results as
 ;; https://chessprogramming.wikispaces.com/Perft+Results
-#?(:clj
-   (deftest perft-check
-     (let [tests [{:fen start-fen
-                   :expected [20 400 8902]}
-                  {:fen "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"
-                   :expected [48 2039 97862]}
-                  {:fen "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -"
-                   :expected [14 191 2812]}
-                  {:fen "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"
-                   :expected [6 264 9467]}]]
-       (doseq [{:keys [fen expected] :as test} tests
-               depth (range 1 (+ 1 (count expected)))
-               :let [expected-result (nth expected (- depth 1))]]
-         (is (= (perft (-> (new-game :start-fen fen) board)
-                       depth)
-                expected-result)
-             (str "perft test for fen: " fen " and depth " depth " should return " expected-result))))))
+(deftest perft-check
+  (let [tests [{:fen start-fen
+                :expected [20 400 8902]}
+               {:fen "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"
+                :expected [48 2039 97862]}
+               {:fen "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -"
+                :expected [14 191 2812]}
+               {:fen "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"
+                :expected [6 264 9467]}]]
+    (doseq [{:keys [fen expected] :as test} tests
+            depth (range 1 (+ 1 (count expected)))
+            :let [expected-result (nth expected (- depth 1))]]
+      (is (= (perft (-> (new-game :start-fen fen) board)
+                    depth)
+             expected-result)
+          (str "perft test for fen: " fen " and depth " depth " should return " expected-result)))))
