@@ -546,16 +546,15 @@
                 (checking-pieces board))})
 
 
-#?(:clj
-   (defn perft
-     "perft function for testing move generator, see
+(defn perft
+  "perft function for testing move generator, see
   https://chessprogramming.wikispaces.com/Perft"
-     [board depth & [no-pmap]]
-     (cond (= depth 0) 1
-           (= depth 1) (count (moves board))
-           :else (reduce + ((if no-pmap map pmap)
-                            (fn [m] (perft (do-move board m) (- depth 1) true))
-                            (moves board))))))
+  [board depth & [no-pmap]]
+  (cond (= depth 0) 1
+        (= depth 1) (count (moves board))
+        :else (reduce + (#?(:clj (if no-pmap map pmap) :cljs map)
+                         (fn [m] (perft (do-move board m) (- depth 1) true))
+                         (moves board)))))
 
 #?(:clj
    (defn divide

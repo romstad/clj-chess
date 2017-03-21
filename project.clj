@@ -18,7 +18,10 @@
                  [org.apache.commons/commons-lang3 "3.5"]]
 
   :profiles {:dev
-             {:dependencies [[lein-doo "0.1.7"]]
+             {:dependencies [[lein-doo "0.1.7"]
+                             [com.cemerick/piggieback "0.2.1"]]
+
+              :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
               :plugins      [[lein-figwheel "0.5.9"]
                              [lein-doo "0.1.7"]]
@@ -30,11 +33,13 @@
   {:builds [{:id "test"
              :source-paths ["src/clojure" "test" "target/classes"]
              :compiler {:output-to "target/js/testable.js"
+                        :output-dir "target/js/out"
                         :main clj-chess.test-runner
                         :optimizations :none}}
             {:id "node-test"
              :source-paths ["src/clojure" "test" "target/classes"]
              :compiler {:output-to "target/nodejs/testable.js"
+                        :output-dir "target/nodejs/out"
                         :main clj-chess.test-runner
                         :optimizations :none
                         :target :nodejs}}]})
