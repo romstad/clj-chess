@@ -1,7 +1,9 @@
 (ns clj-chess.game-test
-  (:require [clojure.test :refer :all]
-            [clj-chess.board :refer [to-fen]]
-            [clj-chess.game :refer :all]
+  #?(:cljs (:require-macros [cljs.test :refer (is deftest testing)]))
+  (:require #?(:clj [clojure.test :refer :all]
+               :cljs [cljs.test])
+            [clj-chess.board :refer [to-fen start-fen #?(:clj perft)]]
+            [clj-chess.game :refer [new-game board remove-tag set-tag tag-value add-san-move add-san-move-sequence step-back move-tree remove-node take-back move-text to-end remove-children promote-node promote-node-to-main-line from-pgn to-pgn to-ecn from-ecn]]
             [clj-chess.pgn :refer [parse-pgn]]))
 
 
@@ -598,3 +600,44 @@ Qg1+. Topalov resigned and this wonderful game was over.} 1-0")
         e1 (to-ecn g1)]
     (is (= e0 (-> e0 from-ecn to-ecn))
         (= e1 (-> e1 from-ecn to-ecn)))))
+
+(deftest en-passant-encoding-in-fen
+  (let [g0 (-> (new-game)
+               (add-san-move "d4"))]
+    (is (= (-> g0 board to-fen)
+           "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1"))))
+
+(deftest halfmove-encoding-in-fen
+  (is (= "rnbq1rk1/pP2bppp/4pn2/8/3P4/5N2/PP2PPPP/RNBQKB1R w KQ - 1 7"
+         (-> (new-game :start-fen "rnbq1rk1/pP2bppp/4pn2/8/3P4/5N2/PP2PPPP/RNBQKB1R w KQ - 1 7") board to-fen))))
+
+(deftest ply-parsing-in-fen
+  (let [fen-3plies (-> (new-game) (add-san-move-sequence ["d4" "d5" "c4"]) board to-fen)]
+    (is (= fen-3plies "rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq c3 0 2"))
+    (is (= (-> (new-game) (add-san-move-sequence ["d4" "d5" "c4" "c6"]) board to-fen)
+           (-> (new-game :start-fen fen-3plies) (add-san-move "c6") board to-fen)))))
+
+(deftest ep-possible-after-decoding-fen
+  (let [fen-ep-possible "rnbqk2r/p1p1bppp/4pn2/1pPp2B1/3P4/2N5/PP2PPPP/R2QKBNR w KQkq b6 0 6"]
+    (is (= fen-ep-possible
+           (-> (new-game :start-fen fen-ep-possible) board to-fen)))))
+
+;; Make sure we get the same perft results as
+;; https://chessprogramming.wikispaces.com/Perft+Results
+#?(:clj
+   (deftest perft-check
+     (let [tests [{:fen start-fen
+                   :expected [20 400 8902]}
+                  {:fen "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -"
+                   :expected [48 2039 97862]}
+                  {:fen "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -"
+                   :expected [14 191 2812]}
+                  {:fen "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"
+                   :expected [6 264 9467]}]]
+       (doseq [{:keys [fen expected] :as test} tests
+               depth (range 1 (+ 1 (count expected)))
+               :let [expected-result (nth expected (- depth 1))]]
+         (is (= (perft (-> (new-game :start-fen fen) board)
+                       depth)
+                expected-result)
+             (str "perft test for fen: " fen " and depth " depth " should return " expected-result))))))
