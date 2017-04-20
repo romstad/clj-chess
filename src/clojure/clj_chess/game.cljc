@@ -867,5 +867,5 @@
                         :ecn
                         :pgn))]
        (if (= format :pgn)
-         (map #(from-ecn % :san true) (pgn/games-in-file file-name))
-         (map #(from-ecn % :san false) (ecn/games-in-file file-name))))))
+         (keep #(from-ecn % :san true) (pgn/games-in-file file-name))
+         (keep #(from-ecn % :san false) (ecn/games-in-file file-name))))))

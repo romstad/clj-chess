@@ -100,14 +100,32 @@
             (process-movetext-token tokens acc)]
         (read-movetext new-tokens new-acc)))))
 
+;; Ugly hack to work around a ChessBase bug: In games exported from
+;; ChessBase, quotes are not escaped with a backslash in PGN strings.
+(defn read-tag-chessbase [tokens acc]
+  (let [[_ tag-name & remaining-tags] tokens
+        value-tags (take-while #(not (= (token-type %)
+                                        token-type-right-bracket))
+                               remaining-tags)
+        right-bracket (first (drop-while
+                               #(not (= (token-type %)
+                                        token-type-right-bracket))
+                               remaining-tags))]
+    (if right-bracket
+      [(drop (+ 3 (count value-tags)) tokens)
+       (conj acc [(token-value tag-name)
+                  (apply str (map token-value value-tags))])]
+      (throw (chess.PGNException. "Malformed tag pair")))))
+
 (defn read-tag [tokens acc]
   (let [[_ tag-name tag-value right-bracket] tokens]
-    (if (and (= (token-type tag-name) token-type-symbol)
-             (= (token-type tag-value) token-type-string)
-             (= (token-type right-bracket) token-type-right-bracket))
-      [(drop 4 tokens) (conj acc [(token-value tag-name)
-                                  (token-value tag-value)])]
-      (throw (chess.PGNException. "Malformed tag pair")))))
+    (if-not (= right-bracket token-type-right-bracket)
+      (read-tag-chessbase tokens acc)
+      (if (and (= (token-type tag-name) token-type-symbol)
+               (= (token-type tag-value) token-type-string))
+        [(drop 4 tokens) (conj acc [(token-value tag-name)
+                                    (token-value tag-value)])]
+        (throw (chess.PGNException. "Malformed tag pair"))))))
 
 (defn read-headers [token-seq & [acc]]
   (let [acc (or acc [:headers])]

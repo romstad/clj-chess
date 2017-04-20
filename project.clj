@@ -15,7 +15,11 @@
                  [me.raynes/conch "0.8.0"]
                  [clj-time "0.13.0"]
                  [org.apache.commons/commons-math3 "3.6.1"]
-                 [org.apache.commons/commons-lang3 "3.5"]]
+                 [org.apache.commons/commons-lang3 "3.5"]
+                 [funcool/clojure.jdbc "0.9.0"]
+                 [honeysql "0.8.2"]
+                 [com.taoensso/nippy "2.13.0"]
+                 [org.xerial/sqlite-jdbc "3.16.1"]]
 
   :profiles {:dev
              {:dependencies [[lein-doo "0.1.7"]

@@ -12,7 +12,7 @@ public class PGNReader {
     }
 
     static boolean isSymbolStart(char c) {
-        return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".indexOf(c) >= 0;
+        return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-".indexOf(c) >= 0;
     }
 
     static boolean isSymbolCont(char c) {

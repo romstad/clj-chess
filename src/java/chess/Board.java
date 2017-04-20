@@ -2112,6 +2112,11 @@ public final class Board {
     public int moveFromSAN(String str) {
         List<Integer> moves = this.moves();
 
+        // ChessBase uses '--' to encode null moves
+        if (str.length() == 2 && str.substring(0, 2).equals("--")) {
+            return Move.NONE;
+        }
+
         // Castling moves
         if (str.length() >= 5 && str.substring(0, 5).equals("O-O-O")) {
             for (int move : moves) {
