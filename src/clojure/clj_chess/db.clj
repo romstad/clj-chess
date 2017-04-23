@@ -97,11 +97,12 @@
     (take-while
       (complement empty?)
       (map (fn [i]
-             (println "selecting from "
+             (println "selecting from"
                       (+ 1 (* i chunk-size))
-                      " to "
+                      "to"
                       (+ (+ chunk-size 1)
-                         (* i chunk-size)))
+                         (* i chunk-size)
+                         -1))
              (games-matching db-spec
                              ["SELECT * FROM games WHERE id>=(?) and id<(?)"
                               (+ 1 (* i chunk-size))

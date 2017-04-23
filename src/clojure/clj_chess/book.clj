@@ -175,7 +175,7 @@
   format, where win/draw/loss statistics, maximum Elos and last played dates
   are not included."
   [book-entries filename & {:keys [purge compact]
-                            :or {purge true compact false}}]
+                            :or {purge false compact false}}]
   (with-open [out (io/output-stream filename)]
     (.write out (if compact 1 0))
     (doseq [entry book-entries]
@@ -185,10 +185,16 @@
                         min-game-count)))
         (.write out (entry-to-bytes entry compact))))))
 
+(defn ^:private entry< [entry-0 entry-1]
+  (or (< (:key entry-0) (:key entry-1))
+      (and (= (:key entry-0) (:key entry-1))
+           (< (:move entry-0) (:move entry-1)))))
+
+(defn ^:private key< [entry-0 entry-1]
+  (< (:key entry-0) (:key entry-1)))
+
 (def ^:private sort-entries
-  (partial sort #(or (< (:key %1) (:key %2))
-                     (and (= (:key %1) (:key %2))
-                          (< (:move %1) (:move %2))))))
+  (partial sort entry<))
 
 (defn create-book
   "Creates an opening book from the provided input files (in PGN or ECN
@@ -228,7 +234,9 @@
     (let [middle (quot (+ left right) 2)
           mid-key (read-key file middle entry-size)]
       (cond (and (= key mid-key)
-                 (not= key (read-key file (dec middle) entry-size)))
+                 (or (= middle 0)
+                     (not= key (read-key file (dec middle)
+                                         entry-size))))
             middle
 
             (< mid-key key)
@@ -243,6 +251,55 @@
     (.seek file (+ 1 (* entry-size index)))
     (.read file buf)
     (entry-from-bytes buf compact)))
+
+(defn ^:private first-entry-bigger-than [entry file-name]
+  (with-open [file (RandomAccessFile. file-name "r")]
+    (let [compact (= (.read file) 1)
+          entry-size (if compact compact-entry-size entry-size)]
+      (loop [left 0
+             right (quot (.length file) entry-size)]
+        (if (> left right)
+          nil
+          (let [middle (quot (+ left right) 2)
+                mid-entry (read-entry file middle compact)]
+            (cond (and (entry< entry mid-entry)
+                       (not (entry< entry (read-entry
+                                            file (dec middle) compact))))
+                  mid-entry
+
+                  (not (entry< entry mid-entry))
+                  (recur (inc middle) right)
+
+                  :else
+                  (recur left (dec middle)))))))))
+
+(defn ^:private first-entry-with-key-bigger-than [entry file-name]
+  (with-open [file (RandomAccessFile. file-name "r")]
+    (let [compact (= (.read file) 1)
+          entry-size (if compact compact-entry-size entry-size)]
+      (loop [left 0
+             right (quot (.length file) entry-size)]
+        (if (> left right)
+          nil
+          (let [middle (quot (+ left right) 2)
+                mid-entry (read-entry file middle compact)]
+            (cond (and (key< entry mid-entry)
+                       (or (= middle 0)
+                           (not (key< entry (read-entry
+                                              file (dec middle)
+                                              compact)))))
+                  mid-entry
+
+                  (not (key< entry mid-entry))
+                  (recur (inc middle) right)
+
+                  :else
+                  (recur left (dec middle)))))))))
+
+(defn ^:private first-entry [book-file-name]
+  (with-open [f (RandomAccessFile. book-file-name "r")]
+    (let [compact (= (.read f) 1)]
+      (read-entry f 0 compact))))
 
 (defn ^:private read-book-file
   "Reads an entire book file into a vector of book entries."
@@ -292,12 +349,12 @@
                        moves)]
     (map #(into {} (merge-entries %)) mergeable)))
 
-(defn ^:private find-book-entries-internal [board book-file-name]
+(defn ^:private find-book-entries-internal [key book-file-name]
   (with-open [f (RandomAccessFile. book-file-name "r")]
     (let [compact (= (.read f) 1)
           entry-size (if compact compact-entry-size entry-size)
           entry-count (quot (.length f) entry-size)]
-      (when-let [i (find-key (.getKey board) f 0 entry-count entry-size)]
+      (when-let [i (find-key key f 0 (dec entry-count) entry-size)]
         (sort
           #(> (:score %1) (:score %2))
           (loop [i i
@@ -305,17 +362,39 @@
             (if (= (inc i) entry-count)
               result
               (let [next-entry (read-entry f (inc i) compact)]
-                (if (not= (:key next-entry) (.getKey board))
+                (if (not= (:key next-entry) key)
                   result
                   (recur (inc i)
                          (conj result next-entry)))))))))))
+
+(defn merge-book-files
+  "Merge a number of opening books to a single large book. Doesn't work
+  for compact books, for now. This function is functionally almost identical
+  to merge-books, except that merge-book-files is memory friendly, but
+  also much slower."
+  [output-file-name & file-names]
+  (with-open [out (io/output-stream output-file-name)]
+    (.write out 0)
+    (loop [entry (apply min-key :key (map first-entry file-names))]
+      (when entry
+        (let [key (:key entry)
+              merged-entries (merge-book-entry-lists
+                               (map #(find-book-entries-internal
+                                       key %)
+                                    file-names))]
+          (doseq [e merged-entries]
+            (.write out (entry-to-bytes e false)))
+          (recur (apply min-key :key
+                        (keep #(first-entry-with-key-bigger-than entry %)
+                              file-names))))))))
+
 
 (defn find-book-entries
   "Returns a list of all book entries for the given input board, read from
   the supplied book files."
   [board & book-file-names]
   (let [entries (merge-book-entry-lists
-                  (map #(find-book-entries-internal board %)
+                  (map #(find-book-entries-internal (.getKey board) %)
                        book-file-names))
         score-sum (reduce + (map :score entries))]
     (map (comp #(dissoc % :score)
