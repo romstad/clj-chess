@@ -8,7 +8,7 @@
   :resource-paths ["src/javascript"]
   :javac-options ["-target" "1.8" "-source" "1.8"]
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.495"]
+                 [org.clojure/clojurescript "1.9.521"]
                  [org.clojure/core.async "0.3.442"]
                  [instaparse "1.4.5"]
                  [com.lucasbradstreet/instaparse-cljs "1.4.1.2"]
@@ -27,7 +27,7 @@
 
               :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
-              :plugins      [[lein-figwheel "0.5.9"]
+              :plugins      [[lein-figwheel "0.5.10"]
                              [lein-doo "0.1.7"]]
               }}
 
