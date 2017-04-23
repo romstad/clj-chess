@@ -1603,7 +1603,7 @@ Board.prototype.movesForPieceTypeToSquare = function (piece, square) {
     var result = [];
     for (var i = 0; i < ms.length; i++) {
         if (moveTo(ms[i]) == square &&
-            pieceType(this.board[moveFrom(ms[i])] == pieceType(piece))) {
+            pieceType(this.board[moveFrom(ms[i])]) == pieceType(piece)) {
             result.push(ms[i]);
         }
     }
