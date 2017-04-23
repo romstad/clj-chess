@@ -86,3 +86,25 @@
                                   (nip/thaw (:other_tags x))))]
               [:byte-moves (nip/thaw (:moves x))]]))
          (jdbc/fetch conn query))))
+
+(defn game-chunks
+  "Returns a lazy sequence of chunks of games, `chunk-size` at a time,
+  contained in the database. Assumes that the games in the database have
+  contiguous IDs starting from 1."
+  [db-spec & [chunk-size skip]]
+  (let [chunk-size (or chunk-size 1000)
+        skip (or skip 0)]
+    (take-while
+      (complement empty?)
+      (map (fn [i]
+             (println "selecting from "
+                      (+ 1 (* i chunk-size))
+                      " to "
+                      (+ (+ chunk-size 1)
+                         (* i chunk-size)))
+             (games-matching db-spec
+                             ["SELECT * FROM games WHERE id>=(?) and id<(?)"
+                              (+ 1 (* i chunk-size))
+                              (+ (+ chunk-size 1)
+                                 (* i chunk-size))]))
+           (drop skip (range))))))

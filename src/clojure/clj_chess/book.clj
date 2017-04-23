@@ -3,7 +3,9 @@
             [clojure.pprint :refer [cl-format]]
             [clj-time.core :as time]
             [clj-chess.board :as b]
-            [clj-chess.game :as g]))
+            [clj-chess.db :as db]
+            [clj-chess.game :as g])
+  (:import (java.io RandomAccessFile)))
 
 (defrecord BookEntry
   [^long key
@@ -85,6 +87,34 @@
                   (/ (time/in-days (time/interval date (time/now)))
                      365.25)))))
 
+(defn ^:private merge-entries [book-entries]
+  (BookEntry.
+    (:key (first book-entries))
+    (:move (first book-entries))
+    (reduce max (map :elo book-entries))
+    (reduce max (map :opponent-elo book-entries))
+    (reduce + (map :wins book-entries))
+    (reduce + (map :draws book-entries))
+    (reduce + (map :losses book-entries))
+    (reduce max (map :latest-year book-entries))
+    (reduce + (map :score book-entries))))
+
+(defn ^:private compress-beginning [book-entries]
+  (let [mergeable? (fn [e]
+                     (and (= (:key e) (:key (first book-entries)))
+                          (= (:move e) (:move (first book-entries)))))]
+    [(merge-entries (take-while mergeable? book-entries))
+     (drop-while mergeable? book-entries)]))
+
+(defn ^:private compress [book-entries]
+  (println "compressing...")
+  (loop [[compressed-entry remaining-entries] (compress-beginning book-entries)
+         result (transient [])]
+    (if (empty? remaining-entries)
+      (persistent! (conj! result compressed-entry))
+      (recur (compress-beginning remaining-entries)
+             (conj! result compressed-entry)))))
+
 (defn ^:private add-game [book-entries game]
   (if-not game
     book-entries
@@ -123,33 +153,11 @@
 (defn ^:private add-game-file [book-entries file-name]
   (add-games book-entries (g/games-in-file file-name)))
 
-(defn ^:private merge-entries [book-entries]
-  (BookEntry.
-    (:key (first book-entries))
-    (:move (first book-entries))
-    (reduce max (map :elo book-entries))
-    (reduce max (map :opponent-elo book-entries))
-    (reduce + (map :wins book-entries))
-    (reduce + (map :draws book-entries))
-    (reduce + (map :losses book-entries))
-    (reduce max (map :latest-year book-entries))
-    (reduce + (map :score book-entries))))
+(defonce  chunks-added (atom 0))
 
-(defn ^:private compress-beginning [book-entries]
-  (let [mergeable? (fn [e]
-                    (and (= (:key e) (:key (first book-entries)))
-                         (= (:move e) (:move (first book-entries)))))]
-    [(merge-entries (take-while mergeable? book-entries))
-     (drop-while mergeable? book-entries)]))
-
-(defn ^:private compress [book-entries]
-  (println "compressing...")
-  (loop [[compressed-entry remaining-entries] (compress-beginning book-entries)
-         result (transient [])]
-    (if (empty? remaining-entries)
-      (persistent! (conj! result compressed-entry))
-      (recur (compress-beginning remaining-entries)
-             (conj! result compressed-entry)))))
+(defn ^:private add-game-chunk [book-entries chunk]
+  (swap! chunks-added inc)
+  (add-games book-entries chunk))
 
 (defn ^:private purge [book-entries]
   (println "purging...")
@@ -164,7 +172,7 @@
   should be the value returned by an earlier call to create-book. If 'purge'
   is true, entries with low book scores or a very low number of games are
   discarded. If 'compact' is true, the book is written in a more compact
-  format, where win/draw/loss statistics, average Elos and last played dates
+  format, where win/draw/loss statistics, maximum Elos and last played dates
   are not included."
   [book-entries filename & {:keys [purge compact]
                             :or {purge true compact false}}]
@@ -177,6 +185,11 @@
                         min-game-count)))
         (.write out (entry-to-bytes entry compact))))))
 
+(def ^:private sort-entries
+  (partial sort #(or (< (:key %1) (:key %2))
+                     (and (= (:key %1) (:key %2))
+                          (< (:move %1) (:move %2))))))
+
 (defn create-book
   "Creates an opening book from the provided input files (in PGN or ECN
   format). The book is stored in memory, use write-book afterwards to save
@@ -186,11 +199,24 @@
   memory, you may have to increase your Java heap size."
   [& filenames]
   (compress
-    (sort #(or (< (:key %1) (:key %2))
-               (and (= (:key %1) (:key %2))
-                    (< (:move %1) (:move %2))))
-          (persistent!
-            (reduce add-game-file (transient []) filenames)))))
+    (sort-entries
+      (persistent!
+        (reduce add-game-file (transient []) filenames)))))
+
+(defn create-book-from-db
+  "Creates an opening book from the SQLite games database provided in the
+  parameter. The parameter should be a jdbc.core db-spec, i.e. a map of the
+  form `{:subprotocol \"sqlite\", :subname \"/path/to/gamesdb.db\"}."
+  [db-spec & [drop-chunks take-chunks]]
+  (reset! chunks-added 0)
+  (compress
+    (sort-entries
+      (persistent!
+        (reduce add-game-chunk
+                (transient [])
+                (take take-chunks
+                      (db/game-chunks
+                        db-spec 1000 (* take-chunks drop-chunks))))))))
 
 (defn ^:private read-key [file index entry-size]
   (.seek file (+ 1 (* entry-size index)))
@@ -218,11 +244,43 @@
     (.read file buf)
     (entry-from-bytes buf compact)))
 
+(defn ^:private read-book-file
+  "Reads an entire book file into a vector of book entries."
+  [book-file-name]
+  (with-open [f (RandomAccessFile. book-file-name "r")]
+    (let [compact (= (.read f) 1)
+          entry-size (if compact compact-entry-size entry-size)
+          entry-count (quot (.length f) entry-size)]
+      (loop [i 0
+             result [(read-entry f i compact)]]
+        (if (= (inc i) entry-count)
+          result
+          (recur (inc i)
+                 (conj result (read-entry f (inc i) compact))))))))
+
+(defn merge-books
+  "Merge a number of opening books to a single large book. Doesn't work
+  for compact books, for now."
+  [output-file & input-files]
+  (write-book
+    (reduce (fn [acc next]
+              (println "merging" next)
+              (println "Entries so far:" (count acc))
+              (->> (read-book-file next)
+                   (concat acc)
+                   sort-entries
+                   compress))
+            []
+            input-files)
+    output-file
+    :purge false
+    :compact false))
+
 (defn find-book-entries
   "Returns a list of all book entries in the given book file for the given
   board."
   [book-file-name board]
-  (with-open [f (java.io.RandomAccessFile. book-file-name "r")]
+  (with-open [f (RandomAccessFile. book-file-name "r")]
     (let [compact (= (.read f) 1)
           entry-size (if compact compact-entry-size entry-size)
           entry-count (quot (.length f) entry-size)]
