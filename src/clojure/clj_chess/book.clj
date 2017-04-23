@@ -276,37 +276,58 @@
     :purge false
     :compact false))
 
-(defn find-book-entries
-  "Returns a list of all book entries in the given book file for the given
-  board."
-  [book-file-name board]
+(defn ^:private merge-book-entry-lists
+  "Merges lists of lists of book entries from the same position to a single
+  list, by combining entries corresponding to the same move. Used when
+  looking up a move in multiple book files at once. Does not support
+  compact books."
+  [list-of-list-of-entries]
+  (let [moves (-> (mapcat #(map :move %) list-of-list-of-entries)
+                  distinct
+                  sort)
+        mergeable (map (fn [m]
+                         (keep (fn [es]
+                                 (first (filter #(= (:move %) m) es)))
+                               list-of-list-of-entries))
+                       moves)]
+    (map #(into {} (merge-entries %)) mergeable)))
+
+(defn ^:private find-book-entries-internal [board book-file-name]
   (with-open [f (RandomAccessFile. book-file-name "r")]
     (let [compact (= (.read f) 1)
           entry-size (if compact compact-entry-size entry-size)
           entry-count (quot (.length f) entry-size)]
       (when-let [i (find-key (.getKey board) f 0 entry-count entry-size)]
-        (let [entries (sort
-                        #(> (:score %1) (:score %2))
-                        (loop [i i
-                               result [(read-entry f i compact)]]
-                          (if (= (inc i) entry-count)
-                            result
-                            (let [next-entry (read-entry f (inc i) compact)]
-                              (if (not= (:key next-entry) (.getKey board))
-                                result
-                                (recur (inc i)
-                                       (conj result next-entry)))))))
-              score-sum (reduce + (map :score entries))]
-          (map (comp #(dissoc % :score)
-                     #(assoc % :probability
-                               (/ (:score %) score-sum)))
-               entries))))))
+        (sort
+          #(> (:score %1) (:score %2))
+          (loop [i i
+                 result [(read-entry f i compact)]]
+            (if (= (inc i) entry-count)
+              result
+              (let [next-entry (read-entry f (inc i) compact)]
+                (if (not= (:key next-entry) (.getKey board))
+                  result
+                  (recur (inc i)
+                         (conj result next-entry)))))))))))
+
+(defn find-book-entries
+  "Returns a list of all book entries for the given input board, read from
+  the supplied book files."
+  [board & book-file-names]
+  (let [entries (merge-book-entry-lists
+                  (map #(find-book-entries-internal board %)
+                       book-file-names))
+        score-sum (reduce + (map :score entries))]
+    (map (comp #(dissoc % :score)
+               #(assoc % :probability
+                         (/ (:score %) score-sum)))
+         entries)))
 
 (defn pick-book-move
   "Pick a random book move from the board position, based on their
   probabilities. Returns nil if no book move is found."
-  [book-file-name board]
-  (let [entries (find-book-entries book-file-name board)
+  [board & book-file-names]
+  (let [entries (find-book-entries board book-file-names)
         r (rand)]
     (first (first (filter #(> (second %) r)
                           (map (fn [e c] [(:move e) c])
@@ -316,8 +337,9 @@
 (defn ^:private pprint-entries
   "Pretty-print the book entries for the given board position to the standard
    output, for debugging."
-  [book-file board]
-  (doseq [entry (find-book-entries book-file board)]
+  [board & book-file-names]
+  (doseq [entry (sort-by (comp - :probability)
+                         (apply find-book-entries board book-file-names))]
     (if (:wins entry)
       (cl-format true
                  "~a ~v$% (+~a,=~a,-~a) ~a ~a ~a ~v$%~%"
