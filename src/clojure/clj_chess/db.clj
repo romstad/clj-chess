@@ -76,7 +76,7 @@
                                    ["Result" (:result x)]
                                    ["WhiteElo" (when-let [elo (:white_elo x)]
                                                  (pr-str elo))]
-                                   ["BlackElo" (when-let [elo (:white_elo x)]
+                                   ["BlackElo" (when-let [elo (:black_elo x)]
                                                  (pr-str elo))]]
                                   (when-let [fen (:startfen x)]
                                     [["SetUp" "1"]
