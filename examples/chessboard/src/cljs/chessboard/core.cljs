@@ -72,14 +72,6 @@
                                     square)))))))
 
 
-(re-frame/reg-event-db
-  :do-move
-  (fn [db [_ move]]
-    (-> db
-        (assoc :selected-square nil :candidate-moves [])
-        (update :game #(chess/add-uci-move % (chess/move-to-uci move))))))
-
-
 ;; Views
 
 (def img-url-prefix "http://res.cloudinary.com/ds1kquy7j/image/upload/")
