@@ -26,24 +26,23 @@
   :initialize-db (fn  [_ _] default-db))
 
 
-(re-frame/reg-event-fx
+(re-frame/reg-event-db
   :text-input
-  (fn [{:keys [db]} event]
-    (let [pgn (second event)]
-      {:db (assoc db :game
-                  (chess/to-beginning (chess/game-from-pgn pgn)))})))
+  (fn [db [_ pgn]]
+    (assoc db :game
+           (chess/to-beginning (chess/game-from-pgn pgn)))))
 
 
-(re-frame/reg-event-fx
+(re-frame/reg-event-db
   :back
-  (fn [{:keys [db]} _]
-    {:db (update db :game chess/step-back)}))
+  (fn [db _]
+    (update db :game chess/step-back)))
 
 
-(re-frame/reg-event-fx
+(re-frame/reg-event-db
   :forward
-  (fn [{:keys [db]} _]
-    {:db (update db :game chess/step-forward)}))
+  (fn [db _]
+    (update db :game chess/step-forward)))
 
 
 
@@ -99,7 +98,7 @@
 
 (defn pgn-input-box []
   [:div
-   [:textarea {:placeholder "Copy or type PGN game here."
+   [:textarea {:placeholder "Paste or type PGN game here."
                :rows 30
                :cols 80
                :on-change #(re-frame/dispatch [:text-input (.-value

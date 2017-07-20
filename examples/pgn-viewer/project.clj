@@ -1,9 +1,9 @@
 (defproject pgn-viewer "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.542"]
+                 [org.clojure/clojurescript "1.9.671"]
                  [clj-chess "0.5.0-SNAPSHOT"]
-                 [reagent "0.6.2"]
-                 [re-frame "0.9.3"]]
+                 [reagent "0.7.0"]
+                 [re-frame "0.9.4"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]]
 
@@ -20,10 +20,10 @@
   :profiles
   {:dev
    {:dependencies [[binaryage/devtools "0.9.4"]
-                   [figwheel-sidecar "0.5.10"]
-                   [com.cemerick/piggieback "0.2.1"]]
+                   [figwheel-sidecar "0.5.11"]
+                   [com.cemerick/piggieback "0.2.2"]]
 
-    :plugins      [[lein-figwheel "0.5.10"]]}}
+    :plugins      [[lein-figwheel "0.5.11"]]}}
 
   :cljsbuild
   {:builds
