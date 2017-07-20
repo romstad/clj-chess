@@ -17,13 +17,15 @@
 ;; Subscriptions
 
 (re-frame/reg-sub
-  :game (fn [db] (:game db)))
+  :game
+  (fn [db] (:game db)))
 
 
 ;; Events
 
 (re-frame/reg-event-db
-  :initialize-db (fn  [_ _] default-db))
+  :initialize-db
+  (fn  [_ _] default-db))
 
 
 (re-frame/reg-event-db
