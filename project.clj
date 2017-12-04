@@ -8,22 +8,22 @@
   :resource-paths ["src/javascript"]
   :javac-options ["-target" "1.8" "-source" "1.8"]
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.521"]
-                 [org.clojure/core.async "0.3.442"]
-                 [instaparse "1.4.5"]
+                 [org.clojure/clojurescript "1.9.946"]
+                 [org.clojure/core.async "0.3.465"]
+                 [instaparse "1.4.8"]
                  [com.lucasbradstreet/instaparse-cljs "1.4.1.2"]
                  [me.raynes/conch "0.8.0"]
-                 [clj-time "0.13.0"]
+                 [clj-time "0.14.2"]
                  [org.apache.commons/commons-math3 "3.6.1"]
-                 [org.apache.commons/commons-lang3 "3.5"]
+                 [org.apache.commons/commons-lang3 "3.7"]
                  [funcool/clojure.jdbc "0.9.0"]
-                 [honeysql "0.8.2"]
+                 [honeysql "0.9.1"]
                  [com.taoensso/nippy "2.13.0"]
-                 [org.xerial/sqlite-jdbc "3.16.1"]]
+                 [org.xerial/sqlite-jdbc "3.21.0"]]
 
   :profiles {:dev
-             {:dependencies [[lein-doo "0.1.7"]
-                             [com.cemerick/piggieback "0.2.1"]]
+             {:dependencies [[lein-doo "0.1.8"]
+                             [com.cemerick/piggieback "0.2.2"]]
 
               :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
