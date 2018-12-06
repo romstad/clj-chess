@@ -632,11 +632,10 @@
      [board color]
      (.kingsOfColor board color)))
 
-#?(:clj
-   (defn king-square
-     "The square of the king for the given color."
-     [board color]
-     (.kingSquare board color)))
+(defn king-square
+  "The square of the king for the given color."
+  [board color]
+  (.kingSquare board color))
 
 #?(:clj
    (defn attacks-from

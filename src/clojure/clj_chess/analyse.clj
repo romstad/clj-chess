@@ -64,8 +64,7 @@
   (let [[score-type-1 score-value-1] score-1
         [score-type-2 score-value-2] score-2]
     (cond
-      (and (= score-type-1 :mate) (= score-type-2 :mate)
-           (> score-value-1 0) (> score-value-2 0))
+      (and (= score-type-1 :mate))
       (< score-value-1 score-value-2)
 
       (and (= score-type-1 :mate) (= score-type-2 :mate)
