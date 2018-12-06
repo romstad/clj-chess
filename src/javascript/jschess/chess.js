@@ -510,7 +510,7 @@ Board.prototype.getSideToMove = function () {
 
 // The square of the king for the given side.
 Board.prototype.kingSquare = function(color) {
-    return squareCompress(this.kingSquare[color]);
+    return squareCompress(this.kingSquares[color]);
 };
 
 // Export the position to a string in Forsyth-Edwards notation.
