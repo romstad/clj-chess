@@ -2227,7 +2227,8 @@ public final class Board {
                         (SquareSet.bishopAttacks(to, occ) & (bishops() | queens())) |
                         (knightAttacks(to) & knights()) |
                         (pawnAttacks(us, to) & pawnsOfColor(them)) |
-                        (pawnAttacks(them, to) & pawnsOfColor(us));
+                        (pawnAttacks(them, to) & pawnsOfColor(us)) |
+                        (kingAttacks(to) & kings());
         attackers &= occ;
 
         // If the opponent has no attackers, we are finished:
