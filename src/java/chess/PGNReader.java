@@ -128,13 +128,35 @@ public class PGNReader {
 
     public PGNToken readNAG() throws IOException {
         int c = pbReader.read();
-        assert((char)c == '$');
+        assert((char)c == '$' || (char)c == '!' || (char)c == '?');
         StringBuilder sb = new StringBuilder();
-        for (c = pbReader.read(); Character.isDigit((char)c); c = pbReader.read()) {
-            if (c == -1 || c == 0xFFFF) {
-                break;
+        if ((char)c == '$') {
+            for (c = pbReader.read(); Character.isDigit((char)c); c = pbReader.read()) {
+                if (c == -1 || c == 0xFFFF) {
+                    break;
+                }
+                sb.append((char)c);
             }
-            sb.append((char)c);
+        } else {
+            for (c = pbReader.read(); (char)c == '!' || (char)c == '?'; c = pbReader.read()) {
+                sb.append((char)c);
+            }
+            String s = sb.toString();
+            if (s.equals("!")) {
+                sb = new StringBuilder("1");
+            } else if (s.equals("?")) {
+                sb = new StringBuilder("2");
+            } else if (s.equals("!!")) {
+                sb = new StringBuilder("3");
+            } else if (s.equals("??")) {
+                sb = new StringBuilder("4");
+            } else if (s.equals("!?")) {
+                sb = new StringBuilder("5");
+            } else if (s.equals("?!")) {
+                sb = new StringBuilder("6");
+            } else {
+                sb = new StringBuilder("0");
+            }
         }
         if (c != -1 && c != 0xFFFF) {
             pbReader.unread(c);
@@ -199,7 +221,7 @@ public class PGNReader {
             return readComment();
         } else if ((char)c == ';') {
             return readLineComment();
-        } else if ((char)c == '$') {
+        } else if ((char)c == '$' || (char)c == '!' || (char)c == '?') {
             return readNAG();
         } else {
             throw new PGNException(new StringBuilder()
