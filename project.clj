@@ -19,17 +19,16 @@
                  [funcool/clojure.jdbc "0.9.0"]
                  [honeysql "0.9.4"]
                  [com.taoensso/nippy "2.14.0"]
-                 [org.xerial/sqlite-jdbc "3.25.2"]]
+                 [org.xerial/sqlite-jdbc "3.27.2.1"]]
 
   :profiles {:dev
              {:dependencies [[lein-doo "0.1.11"]
-                             [com.cemerick/piggieback "0.2.2"]]
+                             [cider/piggieback "0.4.0"]]
 
-              :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
+              :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
 
-              :plugins      [[lein-figwheel "0.5.10"]
-                             [lein-doo "0.1.7"]]
-              }}
+              :plugins      [[lein-figwheel "0.5.18"]
+                             [lein-doo "0.1.7"]]}}
 
   :plugins [[lein-cljsbuild "1.1.5"]]
 
