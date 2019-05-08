@@ -406,7 +406,7 @@
   "Pick a random book move from the board position, based on their
   probabilities. Returns nil if no book move is found."
   [board & book-file-names]
-  (let [entries (find-book-entries board book-file-names)
+  (let [entries (apply find-book-entries board book-file-names)
         r (rand)]
     (first (first (filter #(> (second %) r)
                           (map (fn [e c] [(:move e) c])
