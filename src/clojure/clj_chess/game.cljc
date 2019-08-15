@@ -818,7 +818,8 @@
   [ecn & {:keys [include-annotations? san]
           :or {include-annotations? true san false}}]
   (let [fen (reduce (fn [fen tag-value-pair]
-                      (if-not (= (first tag-value-pair) "FEN")
+                      (if-not (= (str/upper-case (first tag-value-pair))
+                                 "FEN")
                         fen
                         (second tag-value-pair)))
                     board/start-fen
