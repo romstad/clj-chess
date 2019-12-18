@@ -708,6 +708,10 @@
                                           (or (not include-variations?)
                                               (empty? (rest children))))
                              " ")))
+                    ;; NAG
+                    (when include-comments?
+                      (when-let [nag (:nag (first children))]
+                        (str "$" nag " ")))
                     ;; Comment for first child move:
                     (when include-comments?
                       (when-let [c (:comment (first children))]
@@ -757,6 +761,10 @@
                         ; String representation of first child move (main variation):
                         ~(-> (first children) :board board/last-move
                              board/move-to-uci)
+                        ; NAG
+                        ~(when include-comments?
+                           (when-let [nag (:nag (first children))]
+                             [:nag nag]))
                         ; Comment for first child move:
                         ~(when include-comments?
                            (when-let [c (:comment (first children))]
