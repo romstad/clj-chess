@@ -437,9 +437,15 @@
         f (Square/make ff fr)
         t (Square/make tf tr)]
     (assoc entry :move
-           (if (= p 0)
+           (cond
+             (and (= (b/piece-type (b/piece-on board f)) b/king)
+                  (not= 1 (Math/abs (- t f))))
+             (Move/makeCastle f t)
+
+             (= p 0)
              (Move/make f t)
-             (Move/makePromotion f t p)))))
+
+             :else (Move/makePromotion f t p)))))
 
 (defn find-book-entries
   "Returns a list of all book entries for the given input board, read from
