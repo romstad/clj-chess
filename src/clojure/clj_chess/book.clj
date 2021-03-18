@@ -74,13 +74,13 @@
     (let [key (get-long bb)
           move (get-int bb)
           score (get-float bb)
-          elo (when-not compact (get-short bb))
-          opponent-elo (when-not compact (get-short bb))
-          wins (when-not compact (get-int bb))
-          draws (when-not compact (get-int bb))
-          losses (when-not compact (get-int bb))
-          first-year (when-not compact (get-short bb))
-          last-year (when-not compact (get-short bb))]
+          elo (if compact 0 (get-short bb))
+          opponent-elo (if compact 0 (get-short bb))
+          wins (if compact 0 (get-int bb))
+          draws (if compact 0 (get-int bb))
+          losses (if compact 0 (get-int bb))
+          first-year (if compact 0 (get-short bb))
+          last-year (if compact 0 (get-short bb))]
       {:key key :move move :elo elo :opponent-elo opponent-elo
        :wins wins :draws draws :losses losses
        :first-year first-year :last-year last-year
