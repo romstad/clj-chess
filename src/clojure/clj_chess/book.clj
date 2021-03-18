@@ -259,8 +259,14 @@
   (.seek file (+ 1 (* entry-size index)))
   (Long/reverseBytes (.readLong file)))
 
+(defn ^:private key> [key1 key2]
+  (pos? (Long/compareUnsigned key1 key2)))
+
+(defn ^:private key< [key1 key2]
+  (key> key2 key1))
+
 (defn ^:private find-key [key file left right entry-size]
-  (if (> left right)
+  (if (key> left right)
     nil
     (let [middle (quot (+ left right) 2)
           mid-key (read-key file middle entry-size)]
@@ -270,7 +276,7 @@
                                          entry-size))))
             middle
 
-            (< mid-key key)
+            (key< mid-key key)
             (recur key file (inc middle) right entry-size)
 
             :else
