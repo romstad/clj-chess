@@ -5,7 +5,8 @@
             [clj-chess.board :as b]
             [clj-chess.db :as db]
             [clj-chess.game :as g])
-  (:import (java.io RandomAccessFile)))
+  (:import (java.io RandomAccessFile)
+           (chess Board Move Square)))
 
 (defrecord BookEntry
   [^long key
@@ -15,26 +16,52 @@
    ^int wins
    ^int draws
    ^int losses
-   ^short latest-year
+   ^short first-year
+   ^short last-year
    ^float score])
 
-(def ^:private entry-size 34)
+(def ^:private entry-size 36)
 (def ^:private compact-entry-size 16)
+
+(defn ^:private put-long [bb x]
+  (.putLong bb (Long/reverseBytes x)))
+
+(defn ^:private get-long [bb]
+  (Long/reverseBytes (.getLong bb)))
+
+(defn ^:private put-int [bb x]
+  (.putInt bb (Integer/reverseBytes x)))
+
+(defn ^:private get-int [bb]
+  (Integer/reverseBytes (.getInt bb)))
+
+(defn ^:private put-short [bb x]
+  (.putShort bb (Short/reverseBytes x)))
+
+(defn ^:private get-short [bb]
+  (Short/reverseBytes (.getShort bb)))
+
+(defn ^:private put-float [bb x]
+  (.putInt (Integer/reverseBytes (Float/floatToIntBits x))))
+
+(defn ^:private get-float [bb]
+  (Float/intBitsToFloat (Integer/reverseBytes (.getInt bb))))
 
 (defn ^:private entry-to-bytes [book-entry compact]
   (let [entry-size (if compact compact-entry-size entry-size)
         bb (java.nio.ByteBuffer/allocate entry-size)
         buf (byte-array entry-size)]
-    (.putLong bb (:key book-entry))
-    (.putInt bb (:move book-entry))
-    (.putFloat bb (:score book-entry))
+    (put-long bb (:key book-entry))
+    (put-int bb (:move book-entry))
+    (put-float bb (:score book-entry))
     (when-not compact
-      (.putShort bb (:elo book-entry))
-      (.putShort bb (:opponent-elo book-entry))
-      (.putInt bb (:wins book-entry))
-      (.putInt bb (:draws book-entry))
-      (.putInt bb (:losses book-entry))
-      (.putShort bb (:latest-year book-entry)))
+      (put-short bb (:elo book-entry))
+      (put-short bb (:opponent-elo book-entry))
+      (put-int bb (:wins book-entry))
+      (put-int bb (:draws book-entry))
+      (put-int bb (:losses book-entry))
+      (put-short bb (:first-year book-entry))
+      (put-short bb (:last-year book-entry)))
     (.flip bb)
     (.get bb buf)
     buf))
@@ -44,17 +71,19 @@
         bb (java.nio.ByteBuffer/allocate entry-size)]
     (.put bb bytes 0 entry-size)
     (.flip bb)
-    (let [key (.getLong bb)
-          move (.getInt bb)
-          score (.getFloat bb)
-          elo (when-not compact (.getShort bb))
-          opponent-elo (when-not compact (.getShort bb))
-          wins (when-not compact (.getInt bb))
-          draws (when-not compact (.getInt bb))
-          losses (when-not compact (.getInt bb))
-          latest-year (when-not compact (.getShort bb))]
+    (let [key (get-long bb)
+          move (get-int bb)
+          score (get-float bb)
+          elo (when-not compact (get-short bb))
+          opponent-elo (when-not compact (get-short bb))
+          wins (when-not compact (get-int bb))
+          draws (when-not compact (get-int bb))
+          losses (when-not compact (get-int bb))
+          first-year (when-not compact (get-short bb))
+          last-year (when-not compact (get-short bb))]
       {:key key :move move :elo elo :opponent-elo opponent-elo
-       :wins wins :draws draws :losses losses :latest-year latest-year
+       :wins wins :draws draws :losses losses
+       :first-year first-year :last-year last-year
        :score score})))
 
 (def ^:dynamic ^:private score-white-win 8.0)
@@ -96,7 +125,8 @@
     (reduce + (map :wins book-entries))
     (reduce + (map :draws book-entries))
     (reduce + (map :losses book-entries))
-    (reduce max (map :latest-year book-entries))
+    (reduce min (map :first-year book-entries))
+    (reduce max (map :last-year book-entries))
     (reduce + (map :score book-entries))))
 
 (defn ^:private compress-beginning [book-entries]
@@ -142,6 +172,7 @@
                                      (if wtm w l)
                                      d
                                      (if wtm l w)
+                                     year
                                      year
                                      (if wtm wscore bscore)))))
               book-entries
@@ -226,7 +257,7 @@
 
 (defn ^:private read-key [file index entry-size]
   (.seek file (+ 1 (* entry-size index)))
-  (.readLong file))
+  (Long/reverseBytes (.readLong file)))
 
 (defn ^:private find-key [key file left right entry-size]
   (if (> left right)
@@ -388,6 +419,21 @@
                         (keep #(first-entry-with-key-bigger-than entry %)
                               file-names))))))))
 
+(defn ^:private clojurify-move [board entry]
+  (let [m (:move entry)
+        jf (bit-and (bit-shift-right m 6) 63)
+        jt (bit-and m 63)
+        p (bit-and (bit-shift-right m 12) 7)
+        ff (quot jf 8)
+        fr (- 7 (mod jf 8))
+        tf (quot jt 8)
+        tr (- 7 (mod jt 8))
+        f (Square/make ff fr)
+        t (Square/make tf tr)]
+    (assoc entry :move
+           (if (= p 0)
+             (Move/make f t)
+             (Move/makePromotion f t p)))))
 
 (defn find-book-entries
   "Returns a list of all book entries for the given input board, read from
@@ -397,9 +443,9 @@
                   (map #(find-book-entries-internal (.getKey board) %)
                        book-file-names))
         score-sum (reduce + (map :score entries))]
-    (map (comp #(dissoc % :score)
-               #(assoc % :probability
-                         (/ (:score %) score-sum)))
+    (map (comp (partial clojurify-move board)
+               (fn [e] (dissoc e :score))
+               (fn [e] (prn e) (prn score-sum) (assoc e :probability (/ (:score e) score-sum))))
          entries)))
 
 (defn pick-book-move
@@ -421,12 +467,13 @@
                          (apply find-book-entries board book-file-names))]
     (if (:wins entry)
       (cl-format true
-                 "~a ~v$% (+~a,=~a,-~a) ~a ~a ~a ~v$%~%"
+                 "~a ~v$% (+~a,=~a,-~a) ~a ~a ~a ~a ~v$%~%"
                  (b/move-to-san board (:move entry))
                  1 (* 100 (/ (+ (:wins entry) (* 0.5 (:draws entry)))
                              (+ (:wins entry) (:draws entry) (:losses entry))))
                  (:wins entry) (:draws entry) (:losses entry)
-                 (:elo entry) (:opponent-elo entry) (:latest-year entry)
+                 (:elo entry) (:opponent-elo entry)
+                 (:first-year entry) (:last-year entry)
                  1 (* 100 (:probability entry)))
       (cl-format true "~a ~v$%~%"
                  (b/move-to-san board (:move entry))
