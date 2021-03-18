@@ -445,7 +445,7 @@
         score-sum (reduce + (map :score entries))]
     (map (comp (partial clojurify-move board)
                (fn [e] (dissoc e :score))
-               (fn [e] (prn e) (prn score-sum) (assoc e :probability (/ (:score e) score-sum))))
+               (fn [e] (assoc e :probability (/ (:score e) score-sum))))
          entries)))
 
 (defn pick-book-move
